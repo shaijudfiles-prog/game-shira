@@ -3,1209 +3,1613 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>פורטל משחקי הלמידה והכיף</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Assistant:wght@400;700;800&display=swap" rel="stylesheet">
+    <title>הרפתקה בארץ הפלאות - משודרג</title>
     <style>
+        :root {
+            --alice-blue: #a5d6f7;
+            --queen-red: #ff5252;
+            --mad-hatter-green: #81c784;
+            --cheshire-purple: #ba68c8;
+            --text-dark: #2c3e50;
+            --royal-gold: #ffd700;
+        }
+
         body {
-            font-family: 'Assistant', sans-serif;
-            background: linear-gradient(135deg, #e0f2fe 0%, #f0fdf4 100%);
-            overflow: hidden;
-            touch-action: manipulation;
-        }
-        
-        /* וילונות פתיחה חגיגיים */
-        .curtain-container {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            z-index: 100; pointer-events: none; display: flex; overflow: hidden;
-        }
-
-        .curtain {
-            width: 50%; height: 100%; background: #7c2d12; 
-            background-image: repeating-linear-gradient(to right, #431407 0px, #7c2d12 20px, #9a3412 40px, #7c2d12 60px, #431407 80px);
-            position: absolute; top: 0; transition: transform 1.2s cubic-bezier(0.45, 0.05, 0.55, 0.95);
-            pointer-events: auto; box-shadow: inset 0 0 60px rgba(0,0,0,0.7);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #e0f2fe 0%, #f3e5f5 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            overflow-x: hidden;
+            padding: 20px 0;
+            box-sizing: border-box;
         }
 
-        #curtain-left { left: 0; transform-origin: left; border-right: 3px solid rgba(0,0,0,0.5); }
-        #curtain-right { right: 0; transform-origin: right; border-left: 3px solid rgba(0,0,0,0.5); }
-        .curtain-open #curtain-left { transform: translateX(-100%) scaleX(0.5); }
-        .curtain-open #curtain-right { transform: translateX(100%) scaleX(0.5); }
-        
-        /* תפריט הפורטלים הראשי */
-        #portal-hub-container {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            z-index: 90; background: radial-gradient(circle, #fef08a 0%, #fef3c7 100%);
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            transition: opacity 0.5s ease;
-            overflow-y: auto;
-            padding: 2rem;
+        #game-container {
+            background: rgba(255, 255, 255, 0.95);
+            width: 95%;
+            max-width: 750px;
+            min-height: 620px;
+            border-radius: 40px;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.1);
+            padding: 30px;
+            text-align: center;
+            border: 8px double var(--alice-blue);
+            position: relative;
+            box-sizing: border-box;
         }
 
-        /* מפת שלבים ואזור בחירה חופשית */
-        .scroll-box {
-            max-height: 42vh;
-            overflow-y: auto;
-            width: 100%;
-            max-width: 450px;
-            border-radius: 1.5rem;
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .screen { display: none; }
+        .active { display: block; animation: fadeIn 0.5s; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        /* שורת כותרת עליונה */
+        .top-bar {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        #status-bar {
             background: #fff;
-            border: 4px solid #9333ea;
-            padding: 1rem;
-            box-shadow: inset 0 0 15px rgba(0,0,0,0.1);
+            padding: 10px 25px;
+            border-radius: 30px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            font-weight: bold;
+            color: #555;
+            font-size: 1.1rem;
         }
 
-        .bounce-in { animation: bounceIn 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55); }
-        @keyframes bounceIn {
-            0% { transform: scale(0.3); opacity: 0; }
-            50% { transform: scale(1.05); }
-            70% { transform: scale(0.9); }
-            100% { transform: scale(1); opacity: 1; }
-        }
-        
-        .feedback-overlay {
-            position: absolute; top: 0; left: 0; right: 0; bottom: 0;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            z-index: 50; pointer-events: none; display: none;
-            background-color: rgba(255, 255, 255, 0.9); border-radius: 1.5rem;
-        }
-        
-        .v-style { color: #16a34a; }
-        .x-style { color: #dc2626; }
-        
-        #next-level-msg {
-            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0);
-            z-index: 110; transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
-        #next-level-msg.show { transform: translate(-50%, -50%) scale(1); }
-        
-        .pulse-btn { transition: all 0.2s; }
-        .pulse-btn:active { transform: scale(0.95); }
-
-        #current-image { width: 100%; height: 100%; object-fit: contain; padding: 1.25rem; border-radius: 1.5rem; display: none; }
-        #emoji-fallback { font-size: 8rem; display: none; }
-
-        /* ספינר טעינה לתמונות */
-        .image-loading::after {
-            content: ""; position: absolute; width: 40px; height: 40px;
-            border: 4px solid #ddd; border-top-color: #3b82f6; border-radius: 50%;
-            animation: spin 1s linear infinite; top: calc(50% - 20px); left: calc(50% - 20px);
-        }
-        @keyframes spin { to { transform: rotate(360deg); } }
-
-        .score-pop { animation: scorePop 0.3s ease-out; }
-        @keyframes scorePop {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.5); color: #16a34a; }
-            100% { transform: scale(1); }
+        /* שורת בקרה תחתונה עבור כפתורים */
+        .bottom-controls {
+            display: flex;
+            justify-content: space-between; /* דוחף אחד לימין ואחד לשמאל */
+            align-items: center;
+            margin-top: 30px;
+            flex-wrap: wrap;
+            gap: 15px;
         }
 
-        .timer-container { font-variant-numeric: tabular-nums; }
-
-        /* אנימציית עונש זמן אדומה */
-        .penalty-flash {
-            animation: penaltyFlash 0.5s ease-out;
-        }
-        @keyframes penaltyFlash {
-            0% { color: #ef4444; transform: scale(1); }
-            50% { color: #ef4444; transform: scale(1.3); }
-            100% { color: #ef4444; transform: scale(1); }
-        }
-
-        /* בועת עונש מעופפת */
-        .floating-penalty {
-            position: absolute;
-            color: #ef4444;
-            font-weight: 900;
-            animation: floatUp 1s ease-out forwards;
-            pointer-events: none;
-            z-index: 150;
-        }
-        @keyframes floatUp {
-            0% { transform: translateY(0) scale(0.8); opacity: 1; }
-            100% { transform: translateY(-40px) scale(1.3); opacity: 0; }
-        }
-
-        /* עיצוב הפורטלים במסך הראשי */
-        .portal-card {
-            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-        }
-        .portal-card:hover {
-            transform: translateY(-8px) scale(1.03);
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-        }
-
-        /* אזור בלונים מיוחד למשחק הבונוס */
-        #balloon-game-container {
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            overflow: hidden;
-            display: none;
-            z-index: 5;
-        }
-        .balloon {
-            position: absolute;
-            bottom: -150px;
+        /* כפתור לוח הישגים בולט (משמאל ב-RTL) */
+        .map-trigger-btn {
+            background: linear-gradient(135deg, #ffb74d 0%, #ffa726 100%);
+            border: none;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 25px;
+            font-weight: bold;
+            font-size: 1.05rem;
             cursor: pointer;
-            user-select: none;
+            box-shadow: 0 5px 15px rgba(255, 167, 38, 0.3);
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .map-trigger-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(255, 167, 38, 0.4);
+        }
+
+        h1 { color: var(--text-dark); font-size: 2.2rem; margin: 10px 0; }
+        p.subtitle { color: #666; margin-bottom: 25px; }
+
+        .menu-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 20px;
+            margin-bottom: 10px;
+        }
+
+        .world-btn {
+            padding: 22px 15px;
+            font-size: 1.1rem;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            color: white;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            font-weight: bold;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .world-btn:hover { transform: scale(1.05) rotate(1.5deg); filter: brightness(1.1); }
+
+        /* צבעי כפתורי התחנות */
+        .white-rabbit { background: #90a4ae; }
+        .mad-hatter { background: var(--mad-hatter-green); }
+        .queen-of-hearts { background: var(--queen-red); }
+        .cheshire-cat { background: var(--cheshire-purple); }
+        .caterpillar { background: #4db6ac; }
+        .tweedle { background: #ffb74d; }
+
+        .problem-display {
+            font-size: 2.4rem;
+            margin: 20px 0;
+            color: var(--text-dark);
+            font-weight: 800;
+            min-height: 100px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            line-height: 1.2;
+        }
+
+        .math-style { direction: ltr; font-family: 'Courier New', monospace; font-size: 3.5rem; margin-bottom: 5px; }
+
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .opt-btn {
+            padding: 18px;
+            font-size: 1.3rem;
+            background: white;
+            border: 3px solid #ddd;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: 0.2s;
+            font-weight: bold;
+            color: var(--text-dark);
+        }
+
+        .opt-btn:hover:not(:disabled) { background: #f0f0f0; border-color: var(--alice-blue); }
+        .opt-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+        input {
+            font-size: 1.8rem;
+            width: 80%;
+            padding: 15px;
+            border-radius: 20px;
+            border: 3px solid #eee;
+            text-align: center;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        input:focus { border-color: var(--alice-blue); }
+
+        .btn-submit {
+            margin-top: 25px;
+            padding: 15px 50px;
+            font-size: 1.4rem;
+            background: var(--alice-blue);
+            color: #2c3e50;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .btn-submit:disabled { opacity: 0.6; cursor: not-allowed; }
+
+        .back-btn {
+            position: absolute;
+            top: 25px;
+            left: 25px;
+            cursor: pointer;
+            background: #eee;
+            border: none;
+            border-radius: 10px;
+            padding: 8px 15px;
+            font-weight: bold;
+            z-index: 10;
+        }
+
+        #feedback {
+            font-size: 1.3rem;
+            font-weight: bold;
+            margin-top: 15px;
+            height: 30px;
+        }
+
+        .hint-text { color: #888; font-size: 1.1rem; margin-bottom: 10px; }
+
+        /* עיצוב שעון מחוגים SVG */
+        .analog-clock {
+            width: 170px;
+            height: 170px;
+            margin-bottom: 15px;
+            filter: drop-shadow(0 8px 16px rgba(0,0,0,0.1));
+        }
+
+        /* עיצוב אלבום המדבקות הויזואלי */
+        .album-toggle-btn {
+            background: linear-gradient(135deg, #a5d6f7 0%, #64b5f6 100%);
+            border: none;
+            color: #1a237e;
+            padding: 12px 24px;
+            border-radius: 25px;
+            font-weight: bold;
+            font-size: 1.05rem;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(33, 150, 243, 0.2);
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .album-toggle-btn:hover {
+            transform: scale(1.03);
+            box-shadow: 0 6px 16px rgba(33, 150, 243, 0.3);
+        }
+
+        .sticker-album {
+            background: #fffdf0;
+            border: 3px dashed #e0d0b0;
+            border-radius: 25px;
+            padding: 20px;
+            margin-top: 15px;
+            box-shadow: inset 0 4px 10px rgba(0,0,0,0.05);
+            display: none; /* מתחיל מוסתר */
+            animation: slideDown 0.3s ease-out forwards;
+            text-align: right; /* יישור הטקסט לימין */
+            margin-right: 0;
+            margin-left: auto;
+        }
+
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .sticker-album h3 {
+            margin: 0 0 15px 0;
+            font-size: 1.15rem;
+            color: #8b7355;
+            font-weight: bold;
+        }
+
+        .stickers-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            justify-content: flex-start; /* התחלה מימין ב-RTL */
+        }
+
+        .sticker-slot {
+            width: 58px;
+            height: 58px;
+            background: #f7f3e3;
+            border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 4rem;
-            width: 90px;
-            height: 110px;
-            border-radius: 50% 50% 50% 50% / 40% 40% 60% 60%;
-            box-shadow: inset -8px -8px 0 rgba(0,0,0,0.15);
-            animation: floatUpAnimation 4s linear forwards;
-            touch-action: none;
+            font-size: 1.9rem;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.05);
+            position: relative;
+            transition: all 0.5s ease;
         }
-        /* חוט לבלון */
-        .balloon::after {
-            content: "";
+
+        .sticker-locked {
+            filter: grayscale(1) opacity(0.25);
+        }
+
+        .sticker-unlocked {
+            filter: none;
+            transform: scale(1.1);
+            background: white;
+            border: 2.5px solid var(--royal-gold);
+            animation: bounceIn 0.5s ease-out;
+        }
+
+        @keyframes bounceIn {
+            0% { transform: scale(0.3); opacity: 0; }
+            50% { transform: scale(1.3); }
+            70% { transform: scale(0.9); }
+            100% { transform: scale(1.1); opacity: 1; }
+        }
+
+        .sticker-tooltip {
             position: absolute;
-            bottom: -12px;
-            left: 50%;
-            width: 2px;
-            height: 16px;
-            background-color: rgba(0,0,0,0.25);
+            bottom: -20px;
+            font-size: 0.7rem;
+            color: #9c7c5d;
+            white-space: nowrap;
+            font-weight: bold;
         }
-        @keyframes floatUpAnimation {
-            0% { transform: translateY(0) rotate(0deg); }
-            100% { transform: translateY(-120vh) rotate(5deg); }
+
+        /* עיצוב מודל לוח ההישגים בריבוע */
+        .map-modal {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, #fcfaf0 0%, #f5f0d6 100%);
+            border-radius: 40px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 30px;
+            box-sizing: border-box;
+            z-index: 120;
+            animation: fadeIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            border: 8px double #ebdcb2;
+            overflow-y: auto;
+        }
+
+        .map-title {
+            color: #5c4308;
+            font-size: 1.8rem;
+            font-weight: 900;
+            margin-bottom: 5px;
+        }
+
+        /* גריד ריבועים צבעוניים לתחנות */
+        .achievements-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            width: 100%;
+            max-width: 550px;
+            margin: 20px 0;
+        }
+
+        @media (max-width: 500px) {
+            .achievements-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        .achievement-card {
+            background: white;
+            border: 3px solid #ebdcb2;
+            border-radius: 20px;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.04);
+            position: relative;
+        }
+
+        .achievement-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.08);
+            border-color: #ffb74d;
+        }
+
+        .achievement-emoji {
+            font-size: 2.8rem;
+            margin-bottom: 8px;
+        }
+
+        .achievement-name {
+            font-size: 0.95rem;
+            font-weight: bold;
+            color: var(--text-dark);
+            margin-bottom: 5px;
+        }
+
+        .achievement-status {
+            font-size: 0.8rem;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-weight: bold;
+            background: #eee;
+            color: #777;
+        }
+
+        /* עיצוב כרטיסייה שהושלמה */
+        .card-completed {
+            border-color: var(--mad-hatter-green) !important;
+            background: #f1f9f1;
+        }
+
+        .card-completed .achievement-status {
+            background: var(--mad-hatter-green);
+            color: white;
+        }
+
+        /* מד התקדמות למדבקות */
+        .progress-container {
+            width: 100%;
+            max-width: 500px;
+            background: #eee;
+            border-radius: 20px;
+            height: 25px;
+            margin: 15px 0 5px 0;
+            overflow: hidden;
+            box-shadow: inset 0 2px 5px rgba(0,0,0,0.1);
+            position: relative;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            background: linear-gradient(135deg, #ffca28 0%, #ffb300 100%);
+            width: 0%;
+            transition: width 0.8s cubic-bezier(0.25, 1, 0.5, 1);
+            border-radius: 20px;
+        }
+
+        .progress-text {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9rem;
+            font-weight: bold;
+            color: #5c4308;
+            z-index: 2;
+        }
+
+        /* עיצוב מסכי כיסוי (הצלה והצלחה) */
+        .rescue-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.98);
+            border-radius: 40px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 30px;
+            box-sizing: border-box;
+            z-index: 100;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        /* מסך הצלחה מלכותי */
+        .success-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, #fffdf0 0%, #fff9d6 100%);
+            border-radius: 40px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 30px;
+            box-sizing: border-box;
+            z-index: 110;
+            border: 8px double var(--royal-gold);
+            animation: fadeIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            cursor: pointer;
+        }
+
+        .royal-emoji {
+            font-size: 6rem;
+            margin-bottom: 20px;
+            animation: royalPulse 1.5s infinite ease-in-out;
+        }
+
+        .royal-text {
+            font-size: 3rem;
+            font-weight: 900;
+            color: #b8860b;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+            margin: 5px 0;
+        }
+
+        .royal-subtext {
+            font-size: 1.4rem;
+            color: #8b6508;
+            font-weight: bold;
+        }
+
+        .royal-dismiss-tip {
+            font-size: 1rem;
+            color: #a08030;
+            margin-top: 30px;
+            font-style: italic;
+            animation: blink 2s infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 0.4; }
+            50% { opacity: 1; }
+        }
+
+        @keyframes royalPulse {
+            0%, 100% { transform: scale(1) rotate(0deg); }
+            50% { transform: scale(1.15) rotate(5deg); }
+        }
+
+        /* מסך סיום מיוחד - הגעה ל-10 מדבקות */
+        .grand-victory-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, #fff3e0 0%, #ffe0b2 100%);
+            border-radius: 40px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 30px;
+            box-sizing: border-box;
+            z-index: 130;
+            border: 8px double #ffb74d;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        /* --- רכיבי עזרת החישוב הקסומה (חשבון כיתה ב') --- */
+        .math-helper-trigger {
+            background: linear-gradient(135deg, #ffd54f 0%, #ffca28 100%);
+            border: none;
+            color: #5c4308;
+            padding: 8px 18px;
+            border-radius: 15px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 5px;
+            box-shadow: 0 4px 10px rgba(255, 213, 79, 0.3);
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .math-helper-trigger:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 14px rgba(255, 213, 79, 0.4);
+        }
+
+        .math-helper-panel {
+            background: #fffdf0;
+            border: 3px dashed #ebdcb2;
+            border-radius: 20px;
+            padding: 15px;
+            margin-top: 15px;
+            width: 100%;
+            max-width: 500px;
+            box-sizing: border-box;
+            display: none;
+            animation: slideDown 0.3s ease-out;
+        }
+
+        .math-helper-title {
+            font-size: 1.05rem;
+            color: #8b7355;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+
+        .helper-dots-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            margin: 15px 0;
+            direction: ltr; /* שמירה על סדר ספירה משמאל לימין בדיסקיות */
+        }
+
+        /* דיסקית המחשה */
+        .helper-dot {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.1);
+            user-select: none;
+            position: relative;
+        }
+
+        /* דיסקיות חיבור רגילות */
+        .dot-blue {
+            background: #4fc3f7;
+            border: 2px solid #0288d1;
+            color: white;
+        }
+
+        .dot-red {
+            background: #ff8a80;
+            border: 2px solid #d32f2f;
+            color: white;
+        }
+
+        /* דיסקית שנמחקה בחיסור */
+        .dot-subtracted {
+            background: #e0e0e0;
+            border: 2px dashed #9e9e9e;
+            color: #757575;
+            position: relative;
+        }
+
+        .dot-subtracted::after {
+            content: "✕";
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #d32f2f;
+            font-size: 1.6rem;
+            font-weight: bold;
+        }
+
+        /* דיסקית שנלחצה ונספרה */
+        .dot-counted {
+            background: #ffd54f !important;
+            border: 2.5px solid #ff8f00 !important;
+            color: #5c4308 !important;
+            transform: scale(1.15);
+            box-shadow: 0 0 10px rgba(255, 143, 0, 0.4);
+        }
+
+        .helper-legend {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            font-size: 0.85rem;
+            color: #666;
+            margin-top: 10px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .legend-box {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
         }
     </style>
 </head>
-<body class="h-screen flex flex-col items-center justify-between p-4 pb-8">
+<body>
 
-    <!-- שכבת וילונות להצגה -->
-    <div id="curtain-wrapper" class="curtain-container">
-        <div id="curtain-left" class="curtain"></div>
-        <div id="curtain-right" class="curtain"></div>
+<div id="game-container">
+    <!-- שורת סטטוס עליונה (מדבקות בארנק בלבד) -->
+    <div class="top-bar">
+        <div id="status-bar">🎩 מדבקות בארנק: <span id="sticker-count">0</span></div>
     </div>
 
-    <!-- ==================== מסך תפריט הפורטלים הראשי ==================== -->
-    <div id="portal-hub-container">
-        <h1 class="text-4xl md:text-5xl font-black text-amber-950 mb-2 text-center drop-shadow-sm">🎪 פורטל למידה וכיף 🎪</h1>
-        <p class="text-base md:text-lg text-amber-800 font-bold mb-6 text-center">בחרו שער קסמים והתחילו לשחק וללמוד!</p>
+    <!-- מסך תפריט ראשי -->
+    <div id="menu-screen" class="screen active">
+        <h1>הרפתקה בארץ הפלאות</h1>
+        <p class="subtitle">בחרו לאן אליס תלך עכשיו או פתחו את לוח ההישגים:</p>
+        <div class="menu-grid">
+            <button class="world-btn white-rabbit" onclick="start('clock')">⏱️ השעון של הארנב<br>(שעון מחוגים)</button>
+            <button class="world-btn mad-hatter" onclick="start('tea')">☕ מסיבת התה<br>(ספרות עשרוניות)</button>
+            <button class="world-btn queen-of-hearts" onclick="start('queen')">♥️ משמר המלכה<br>(יוצא דופן)</button>
+            <button class="world-btn cheshire-cat" onclick="start('cat')">🐱 חיוך החתול<br>(מילים מבולבלות)</button>
+            <button class="world-btn caterpillar" onclick="start('logic')">🐛 הזחל החכם<br>(זכר או נקבה)</button>
+            <button class="world-btn tweedle" onclick="start('math')">👬 טווידל-די ודאם<br>(חשבון פלוס/מינוס)</button>
+        </div>
+    </div>
+
+    <!-- מסך משחק פעיל -->
+    <div id="game-screen" class="screen">
+        <button class="back-btn" onclick="goHome()">🔙 תפריט</button>
+        <h2 id="world-title">תחנה</h2>
+        <p id="world-hint" class="hint-text"></p>
         
-        <!-- כרטיסי הפורטלים הראשיים -->
-        <div id="menu-selection" class="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-5xl mb-4">
-            
-            <!-- פורטל האותיות -->
-            <div onclick="selectPortal('letters')" class="portal-card bg-gradient-to-br from-purple-500 to-indigo-600 rounded-3xl p-6 text-white text-center shadow-xl border-4 border-white cursor-pointer flex flex-col justify-between h-64">
-                <div>
-                    <div class="text-5xl mb-3">🍎</div>
-                    <h3 class="text-2xl font-black mb-2">פורטל האותיות</h3>
-                    <p class="text-xs opacity-90">הכרת אותיות הא'-ב' דרך תמונות סטודיו נקיות וברורות!</p>
-                </div>
-                <span class="bg-white/20 rounded-full py-1 px-4 text-sm font-extrabold mt-4 inline-block">כניסה לשער ➔</span>
-            </div>
-
-            <!-- פורטל החשבון -->
-            <div onclick="selectPortal('math')" class="portal-card bg-gradient-to-br from-emerald-500 to-teal-600 rounded-3xl p-6 text-white text-center shadow-xl border-4 border-white cursor-pointer flex flex-col justify-between h-64">
-                <div>
-                    <div class="text-5xl mb-3">🧮</div>
-                    <h3 class="text-2xl font-black mb-2">פורטל החשבון</h3>
-                    <p class="text-xs opacity-90">פתרון תרגילי חיבור וחיסור ויזואליים מדליקים עם פירות ואימוג'ים!</p>
-                </div>
-                <span class="bg-white/20 rounded-full py-1 px-4 text-sm font-extrabold mt-4 inline-block">כניסה לשער ➔</span>
-            </div>
-
-            <!-- פורטל בונוס מהירות (משחק זריזות ארקייד פעיל לחלוטין!) -->
-            <div onclick="selectPortal('bonus')" class="portal-card bg-gradient-to-br from-pink-500 to-rose-600 rounded-3xl p-6 text-white text-center shadow-xl border-4 border-white cursor-pointer flex flex-col justify-between h-64">
-                <div>
-                    <div class="text-5xl mb-3">🎈</div>
-                    <h3 class="text-2xl font-black mb-2">פורטל בונוס!</h3>
-                    <p class="text-xs opacity-90">משחק פיצוץ בלונים משוגע! פוצצו כמה שיותר בלונים צבעוניים לפני שייגמר הזמן!</p>
-                </div>
-                <span class="bg-white/20 rounded-full py-1 px-4 text-sm font-extrabold mt-4 inline-block">כניסה לשער ➔</span>
-            </div>
-
-        </div>
-
-        <!-- תת-תפריט פנימי המוצג לאחר בחירת פורטל -->
-        <div id="sub-menu-area" class="w-full max-w-lg hidden mt-4 transition-all duration-300">
-            <div class="flex justify-between items-center mb-3 px-2">
-                <h3 id="mode-title" class="text-lg font-black text-amber-950">בחרו שלב למשחק האותיות:</h3>
-                <button onclick="resetToHub()" class="text-xs font-bold text-purple-700 bg-purple-100 hover:bg-purple-200 px-3 py-1.5 rounded-full transition shadow-sm">חזרה לשערים 🎪</button>
-            </div>
-            
-            <div class="scroll-box">
-                <div id="sub-menu-path" class="flex flex-col gap-3 items-center py-2">
-                    <!-- ייטען בצורה דינמית ב-JS -->
-                </div>
-            </div>
-        </div>
-
-        <!-- כפתור הפעלה סופי -->
-        <button id="start-button" onclick="startGame()" class="bg-yellow-400 hover:bg-yellow-500 text-amber-950 font-black text-3xl px-16 py-5 rounded-full shadow-2xl border-4 border-white animate-bounce pulse-btn mt-6 hidden">
-            מתחילים לשחק! ➔
-        </button>
-    </div>
-
-    <!-- ==================== חלונית סיום שלב ושיא חדש ==================== -->
-    <div id="next-level-msg" class="bg-white border-8 border-purple-500 rounded-3xl p-8 shadow-2xl text-center max-w-sm w-full">
-        <h2 class="text-5xl font-black text-purple-600">כל הכבוד!</h2>
-        <div class="mt-4 p-4 bg-purple-50 rounded-xl border-2 border-purple-200">
-            <p class="text-xl font-bold text-gray-700">התוצאה שלך: <span id="finish-time" class="text-2xl text-purple-600">00.0</span> <span id="finish-unit">שניות</span></p>
-            <p id="best-time-msg" class="text-lg font-bold text-green-600 mt-2 hidden">🏆 שיא חדש! 🏆</p>
-        </div>
-        <button onclick="backToMap()" class="mt-6 bg-purple-600 hover:bg-purple-700 text-white font-black text-2xl px-8 py-4 rounded-2xl shadow-lg border-b-4 border-purple-800 w-full pulse-btn">
-            המשך למפה 🗺️
-        </button>
-    </div>
-
-    <!-- ==================== סרגל כלים עליון בזמן המשחק ==================== -->
-    <div class="w-full max-w-lg flex flex-col gap-2 z-10">
-        <div class="flex justify-between items-center bg-white rounded-full px-5 py-3 shadow-sm border-2 border-purple-100">
-            <div class="flex items-center gap-3">
-                <button onclick="abortGameToMenu()" class="bg-gray-100 hover:bg-gray-200 text-gray-700 font-extrabold text-xs md:text-sm px-3.5 py-1.5 rounded-full border border-gray-300 shadow-sm pulse-btn">
-                    🎪 פורטלים
-                </button>
-                <div class="text-sm md:text-lg font-bold text-blue-600 flex items-center gap-1">
-                    <span id="score-label">ניקוד:</span>
-                    <span id="score" class="text-xl md:text-2xl min-w-[20px] inline-block text-center">0</span>
-                </div>
-            </div>
-            
-            <div class="flex flex-col items-center relative">
-                <div class="timer-container text-2xl md:text-3xl font-black text-red-500 leading-tight" id="timer-display">00.0</div>
-                <div class="text-[10px] md:text-xs font-extrabold text-purple-700 mt-0.5 bg-purple-50 border border-purple-200 rounded-full px-2.5 py-0.5 shadow-sm">
-                    <span id="record-label">שיא משחק:</span> <span id="global-best-display" class="font-black text-purple-900">--.-</span>
-                </div>
-            </div>
-
-            <div id="progress-text" class="text-sm md:text-md font-bold text-purple-600">1/10</div>
-        </div>
-    </div>
-
-    <!-- אזור ייחודי עבור משחק הבלונים (אינו מפריע למבנה הרגיל) -->
-    <div id="balloon-game-container"></div>
-
-    <!-- ==================== כרטיס תצוגת המשחק המרכזי (אותיות וחשבון) ==================== -->
-    <div id="main-game-play-area" class="flex-1 flex flex-col items-center justify-center w-full max-w-lg relative gap-4">
+        <div id="question-area" class="problem-display"></div>
         
-        <!-- כרטיס התמונה או השאלה -->
-        <div id="game-card" class="bg-white rounded-3xl shadow-xl w-64 h-64 md:w-80 md:h-80 flex flex-col items-center justify-center bounce-in border-4 border-yellow-400 relative overflow-hidden">
-            
-            <!-- אזור 1: לתמונות (משחקי האותיות) -->
-            <img id="current-image" src="" alt="תמונה">
-            <span id="emoji-fallback" class="select-none text-8xl md:text-9xl"></span>
-
-            <!-- אזור 2: תצוגת טקסט גדולה (לתרגילי חשבון) -->
-            <div id="text-display" class="hidden flex-col items-center justify-center w-full h-full p-4 text-center">
-                <div id="math-visual-emojis" class="text-4xl md:text-5xl mb-4 select-none tracking-wider"></div>
-                <div id="math-text-equation" class="text-7xl md:text-8xl font-black tracking-wide leading-none select-none"></div>
-            </div>
-
-            <!-- שכבות פידבק נכון/טעות -->
-            <div id="feedback-v" class="feedback-overlay v-style">
-                <span class="text-8xl">✓</span>
-                <span class="text-3xl font-black mt-2">נכון!</span>
-            </div>
-            <div id="feedback-x" class="feedback-overlay x-style">
-                <span class="text-8xl">✕</span>
-                <span class="text-3xl font-black mt-2">טעות</span>
-            </div>
-        </div>
-
-        <!-- כרטיס השאלה/ההנחיה מתחת לתמונה -->
-        <div id="target-instruction-card" class="bg-white border-b-4 border-blue-500 rounded-2xl p-4 shadow-lg flex flex-col items-center w-56 md:w-64 text-center">
-            <span id="instruction-title" class="text-gray-400 text-xs font-bold uppercase">מתחיל ב:</span>
-            <span id="target-text" class="text-3xl md:text-4xl font-black text-blue-600 leading-normal">-</span>
-        </div>
-    </div>
-
-    <!-- כפתורי הבחירה: כן! / לא (למשחקי הבחירה) -->
-    <div id="game-play-buttons" class="w-full max-w-md flex justify-center gap-8 z-10">
-        <button id="btn-no" onclick="checkAnswer(false)" class="pulse-btn bg-red-500 hover:bg-red-600 text-white rounded-2xl shadow-lg flex flex-col items-center justify-center w-24 h-24 md:w-32 md:h-32 border-b-4 border-red-700">
-            <span class="text-5xl font-bold">✕</span>
-            <span class="text-sm font-bold mt-1">לא</span>
-        </button>
-
-        <button id="btn-yes" onclick="checkAnswer(true)" class="pulse-btn bg-green-500 hover:bg-green-600 text-white rounded-2xl shadow-lg flex flex-col items-center justify-center w-24 h-24 md:w-32 md:h-32 border-b-4 border-green-700">
-            <span class="text-5xl font-bold">✓</span>
-            <span class="text-sm font-bold mt-1">כן!</span>
-        </button>
-    </div>
-
-    <script>
-        let audioCtx = null;
-        let score = 0;
-        let currentItem = {};
-        let targetLetter = "א"; 
-        let roundCount = 0;
-        let currentRoundPool = [];
-        let isProcessing = true; 
-        
-        let startTime = 0;
-        let timerInterval = null;
-        let imageLoadTimeout = null; 
-        const ROUNDS_PER_LETTER = 10;
-        
-        let currentGameType = 'letters'; // סוג המשחק הנבחר: 'letters', 'math', 'bonus'
-
-        // משתני עזר למשחק הבלונים
-        let balloonInterval = null;
-        let bonusTimeLeft = 30; // 30 שניות למשחק הבונוס
-        let bonusActive = false;
-
-        // שמירת שיאים נפרדים בדפדפן לכל פורטל
-        let globalBests = JSON.parse(localStorage.getItem('portal_game_bests')) || { letters: {}, math: null, bonus: null };
-        let currentLettersStageIndex = parseInt(localStorage.getItem('portal_game_letters_stage')) || 0;
-
-        const alphabetList = ["א", "ב", "ג", "ד", "ה", "ו", "ז", "ח", "ט", "י", "כ", "ל", "מ", "נ", "ס", "ע", "פ", "צ", "ק", "ר", "ש", "ת"];
-
-        // מאגר תמונות האולפן הברורות והנקיות ביותר (בדיוק כמו התפוח והביצה)
-        const items = [
-            // א
-            { name: "אבטיח", letter: "א", emoji: "🍉", img: "https://images.unsplash.com/photo-1587049352846-4a222e784d38?auto=format&fit=crop&q=80&w=400" }, 
-            { name: "אגס", letter: "א", emoji: "🍐", img: "https://images.unsplash.com/photo-1615485290382-441e4d049cb5?auto=format&fit=crop&q=80&w=400" }, 
-            { name: "אננס", letter: "א", emoji: "🍍", img: "https://images.unsplash.com/photo-1550258987-190a2d41a8ba?auto=format&fit=crop&q=80&w=400" }, 
-            // ב
-            { name: "בלון", letter: "ב", emoji: "🎈", img: "https://images.unsplash.com/photo-1507925921958-8a62f3d1a50d?auto=format&fit=crop&q=80&w=400" }, 
-            { name: "בית", letter: "ב", emoji: "🏠", img: "https://images.unsplash.com/photo-1582268611958-ebedea2c12c0?auto=format&fit=crop&q=80&w=400" }, 
-            { name: "בננה", letter: "ב", emoji: "🍌", img: "https://images.unsplash.com/photo-1571771894821-ad996211fdf4?auto=format&fit=crop&q=80&w=400" }, 
-            { name: "ביצה", letter: "ב", emoji: "🥚", img: "https://images.unsplash.com/photo-1582722411496-2ab724b00d68?auto=format&fit=crop&q=80&w=400" }, 
-            // ג
-            { name: "גלידה", letter: "ג", emoji: "🍦", img: "https://images.unsplash.com/photo-1568254183919-78a4f43a2877?auto=format&fit=crop&q=80&w=400" }, 
-            { name: "גזר", letter: "ג", emoji: "🥕", img: "https://images.unsplash.com/photo-1598170845058-32b9d6a5da37?auto=format&fit=crop&q=80&w=400" }, 
-            { name: "גמל", letter: "ג", emoji: "🐪", img: "https://images.unsplash.com/photo-1539650116574-8efeb43e2750?auto=format&fit=crop&q=80&w=400" }, 
-            // ד
-            { name: "דג", letter: "ד", emoji: "🐟", img: "https://images.unsplash.com/photo-1522069169874-c58ec4b76be5?auto=format&fit=crop&q=80&w=400" }, 
-            { name: "דובי", letter: "ד", emoji: "🧸", img: "https://images.unsplash.com/photo-1559251606-c623743a6d76?auto=format&fit=crop&q=80&w=400" }, 
-            { name: "דלת", letter: "ד", emoji: "🚪", img: "https://images.unsplash.com/photo-1517646287270-a5a9ca602e5c?auto=format&fit=crop&q=80&w=400" }, 
-            // ה
-            { name: "הר", letter: "ה", emoji: "⛰️", img: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&q=80&w=400" }, 
-            { name: "הליקופטר", letter: "ה", emoji: "🚁", img: "https://images.unsplash.com/photo-1569003339405-ea396a5a8a90?auto=format&fit=crop&q=80&w=400" }, 
-            // ו
-            { name: "ורד", letter: "ו", emoji: "🌹", img: "https://images.unsplash.com/photo-1551248429-40975aa4de74?auto=format&fit=crop&q=80&w=400" }, 
-            // ז
-            { name: "זברה", letter: "ז", emoji: "🦓", img: "https://images.unsplash.com/photo-1526311128074-155e8511d2a4?auto=format&fit=crop&q=80&w=400" }, 
-            { name: "זיתים", letter: "ז", emoji: "🫒", img: "https://images.unsplash.com/photo-1594007654729-407ededc414a?auto=format&fit=crop&q=80&w=400" }, 
-            // ח
-            { name: "חתול", letter: "ח", emoji: "🐱", img: "https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?auto=format&fit=crop&q=80&w=400" }, 
-            { name: "חלה", letter: "ח", emoji: "🍞", img: "https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&q=80&w=400" }, 
-            { name: "חיפושית", letter: "ח", emoji: "🐞", img: "https://images.unsplash.com/photo-1560114925-24b51a0fac65?auto=format&fit=crop&q=80&w=400" }, 
-            // ט
-            { name: "טלפון", letter: "ט", emoji: "☎️", img: "https://images.unsplash.com/photo-1520923642038-b4a53cbd00ab?auto=format&fit=crop&q=80&w=400" }, 
-            { name: "טרקטור", letter: "ט", emoji: "🚜", img: "https://images.unsplash.com/photo-1579847257912-32b4b44cc48b?auto=format&fit=crop&w=400" }, 
-            // י
-            { name: "ירח", letter: "י", emoji: "🌙", img: "https://images.unsplash.com/photo-1522030299830-16b8d3d049fe?auto=format&fit=crop&q=80&w=400" }, 
-            { name: "ילקוט", letter: "י", emoji: "🎒", img: "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?auto=format&fit=crop&q=80&w=400" }, 
-            // כ
-            { name: "כלב", letter: "כ", emoji: "🐶", img: "https://images.unsplash.com/photo-1543466835-00a7907e9de1?auto=format&fit=crop&q=80&w=400" }, 
-            { name: "כדור", letter: "כ", emoji: "⚽", img: "https://images.unsplash.com/photo-1508098682722-e99c43a406b2?auto=format&fit=crop&q=80&w=400" }, 
-            { name: "כובע", letter: "כ", emoji: "👒", img: "https://images.unsplash.com/photo-1534215754734-18e55d13e346?auto=format&fit=crop&q=80&w=400" }, 
-            { name: "כוכב", letter: "כ", emoji: "⭐", img: "https://images.unsplash.com/photo-1611002214172-792c1f90b59a?auto=format&fit=crop&q=80&w=400" }, 
-            // ל
-            { name: "לימון", letter: "ל", emoji: "🍋", img: "https://images.unsplash.com/photo-1590502593747-42a996133562?auto=format&fit=crop&q=80&w=400" }, 
-            { name: "לב", letter: "ל", emoji: "❤️", img: "https://images.unsplash.com/photo-1518133835878-5a93cc3f89e5?auto=format&fit=crop&q=80&w=400" }, 
-            { name: "לחם", letter: "ל", emoji: "🍞", img: "https://images.unsplash.com/photo-1549931319-a545dcf3bc73?auto=format&fit=crop&q=80&w=400" }, 
-            // מ
-            { name: "מטריה", letter: "מ", emoji: "☂️", img: "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&q=80&w=400" }, 
-            { name: "מכונית", letter: "מ", emoji: "🚗", img: "https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?auto=format&fit=crop&q=80&w=400" }, 
-            { name: "מלפפון", letter: "מ", emoji: "🥒", img: "https://images.unsplash.com/photo-1604008464269-e7e8400013fc?auto=format&fit=crop&q=80&w=400" }, 
-            { name: "מיץ", letter: "מ", emoji: "🧃", img: "https://images.unsplash.com/photo-1600271886742-f049cd451bba?auto=format&fit=crop&q=80&w=400" }, 
-            { name: "מפתח", letter: "מ", emoji: "🔑", img: "https://images.unsplash.com/photo-1516962215378-7fa2e137ae93?auto=format&fit=crop&q=80&w=400" }, 
-            // נ
-            { name: "נעל", letter: "נ", emoji: "👟", img: "https://images.unsplash.com/photo-1606107557195-0e29a4b5b4aa?auto=format&fit=crop&q=80&w=400" }, 
-            { name: "נר", letter: "נ", emoji: "🕯️", img: "https://images.unsplash.com/photo-1603006905003-be475563bc59?auto=format&fit=crop&q=80&w=400" }, 
-            { name: "נוצה", letter: "נ", emoji: "🪶", img: "https://images.unsplash.com/photo-1540324155974-7241349b1772?auto=format&fit=crop&q=80&w=400" }, 
-            // ס
-            { name: "סוס", letter: "ס", emoji: "🐎", img: "https://images.unsplash.com/photo-1553284965-83fd3e82fa5a?auto=format&fit=crop&q=80&w=400" }, 
-            { name: "ספר", letter: "ס", emoji: "📖", img: "https://images.unsplash.com/photo-1544947950-fa07a98d237f?auto=format&fit=crop&q=80&w=400" }, 
-            { name: "סירה", letter: "ס", emoji: "⛵", img: "https://images.unsplash.com/photo-1516690561799-46d8f74f90f6?auto=format&fit=crop&q=80&w=400" }, 
-            // ע
-            { name: "עוגה", letter: "ע", emoji: "🍰", img: "https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&q=80&w=400" }, 
-            { name: "ענן", letter: "ע", emoji: "☁️", img: "https://images.unsplash.com/photo-1534088568595-a066f7104211?auto=format&fit=crop&q=80&w=400" }, 
-            { name: "עץ", letter: "ע", emoji: "🌳", img: "https://images.unsplash.com/photo-1513836279014-a89f7a76ae86?auto=format&fit=crop&q=80&w=400" }, 
-            // פ
-            { name: "פרפר", letter: "פ", emoji: "🦋", img: "https://images.unsplash.com/photo-1551334787-21e6bd3ab135?auto=format&fit=crop&q=80&w=400" }, 
-            { name: "פיל", letter: "פ", emoji: "🐘", img: "https://images.unsplash.com/photo-1581824283135-0666cf353f35?auto=format&fit=crop&q=80&w=400" }, 
-            { name: "פרח", letter: "פ", emoji: "🌸", img: "https://images.unsplash.com/photo-1490750967868-88aa4486c946?auto=format&fit=crop&q=80&w=400" }, 
-            { name: "פטריה", letter: "פ", emoji: "🍄", img: "https://images.unsplash.com/photo-1504198453319-5ce911bafcde?auto=format&fit=crop&q=80&w=400" }, 
-            // צ
-            { name: "צב", letter: "צ", emoji: "🐢", img: "https://images.unsplash.com/photo-1548550023-2bdb3c5beed7?auto=format&fit=crop&q=80&w=400" }, 
-            { name: "ציפור", letter: "צ", emoji: "🐦", img: "https://images.unsplash.com/photo-1452570053594-1b985d6ea890?auto=format&fit=crop&q=80&w=400" }, 
-            // ק
-            { name: "קוף", letter: "ק", emoji: "🐒", img: "https://images.unsplash.com/photo-1570527140771-020891229bb4?auto=format&fit=crop&q=80&w=400" }, 
-            { name: "קשת", letter: "ק", emoji: "🌈", img: "https://images.unsplash.com/photo-1511556532299-8f662fc26a06?auto=format&fit=crop&q=80&w=400" }, 
-            // ר
-            { name: "רכבת", letter: "ר", emoji: "🚂", img: "https://images.unsplash.com/photo-1515162305285-0293e4767cc2?auto=format&fit=crop&q=80&w=400" }, 
-            { name: "רובוט", letter: "ר", emoji: "🤖", img: "https://images.unsplash.com/photo-1531747118685-ca8fa6e08806?auto=format&fit=crop&q=80&w=400" }, 
-            // ש
-            { name: "שמש", letter: "ש", emoji: "☀️", img: "https://images.unsplash.com/photo-1596265307560-a1ac221dd6ab?auto=format&fit=crop&q=80&w=400" }, 
-            { name: "שעון", letter: "ש", emoji: "⌚", img: "https://images.unsplash.com/photo-1563861826100-9cb868fdbe1c?auto=format&fit=crop&q=80&w=400" }, 
-            // ת
-            { name: "תפוח", letter: "ת", emoji: "🍎", img: "https://images.unsplash.com/photo-1560806887-1e4cd0b6bcd6?auto=format&fit=crop&q=80&w=400" }, 
-            { name: "תות", letter: "ת", emoji: "🍓", img: "https://images.unsplash.com/photo-1464965211904-c7214e38c8ad?auto=format&fit=crop&q=80&w=400" }, 
-            { name: "תיק", letter: "ת", emoji: "🎒", img: "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?auto=format&fit=crop&q=80&w=400" }  
-        ];
-
-        // פתיחת הווילונות אוטומטית כשהדף נטען לראשונה
-        window.onload = function() {
-            document.body.classList.add('curtain-open');
-        };
-
-        // פונקציה לבחירת השלב (מפה או חופשי) ושמירת הנתונים במשתני המשחק
-        function selectStage(index, mode) {
-            targetLetter = alphabetList[index];
-            
-            if (mode === 'map') {
-                currentLettersStageIndex = index;
-                localStorage.setItem('portal_game_letters_stage', currentLettersStageIndex);
-                renderLettersMap();
-            } else {
-                // הדגשה ויזואלית לשלב שנבחר
-                document.querySelectorAll('.map-node').forEach(n => n.classList.remove('border-yellow-400', 'scale-105'));
-                const selectedNode = document.querySelectorAll('.map-node')[index];
-                if (selectedNode) selectedNode.classList.add('border-yellow-400', 'scale-105');
-            }
-            
-            const startBtn = document.getElementById('start-button');
-            startBtn.classList.remove('hidden');
-            startBtn.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
-
-        // מעבר ובחירת שער בתפריט הראשי
-        function selectPortal(type) {
-            currentGameType = type;
-            const subMenuArea = document.getElementById('sub-menu-area');
-            const menuSelection = document.getElementById('menu-selection');
-            const startBtn = document.getElementById('start-button');
-            
-            menuSelection.classList.add('hidden');
-            subMenuArea.classList.remove('hidden');
-
-            const modeTitle = document.getElementById('mode-title');
-            
-            if (type === 'letters') {
-                modeTitle.innerText = "🗺️ מסלול מסע האותיות:";
-                renderLettersMap();
-            } else if (type === 'math') {
-                modeTitle.innerText = "🧮 משחק החשבון לקטנטנים:";
-                renderMathStage();
-            } else if (type === 'bonus') {
-                modeTitle.innerText = "⚡ משחק בונוס: פיצוץ בלונים משוגע!";
-                renderBonusStage();
-            }
-        }
-
-        // חזרה חזרה לתפריט הראשי של הפורטלים
-        function resetToHub() {
-            document.getElementById('menu-selection').classList.remove('hidden');
-            document.getElementById('sub-menu-area').classList.add('hidden');
-            document.getElementById('start-button').classList.add('hidden');
-        }
-
-        // סגירת המשחק הנוכחי וחזרה לפורטלים
-        function abortGameToMenu() {
-            stopTimer();
-            stopBalloonGame();
-            isProcessing = true;
-            document.body.classList.remove('curtain-open');
-            
-            const startScreen = document.getElementById('portal-hub-container');
-            startScreen.style.display = 'flex';
-            startScreen.style.opacity = '1';
-            
-            setTimeout(() => {
-                document.body.classList.add('curtain-open');
-            }, 100);
-            
-            resetToHub();
-        }
-
-        // בניית תצוגת מפת השלבים של האותיות
-        function renderLettersMap() {
-            const pathContainer = document.getElementById('sub-menu-path');
-            pathContainer.innerHTML = '';
-            document.getElementById('start-button').classList.add('hidden');
-
-            alphabetList.forEach((letter, index) => {
-                const isCompleted = index < currentLettersStageIndex;
-                const isActive = index === currentLettersStageIndex;
-                const isLocked = index > currentLettersStageIndex;
-
-                let stateClass = "bg-gray-300 text-gray-500 border-gray-400";
-                let badge = "";
-
-                if (isCompleted) {
-                    stateClass = "bg-green-500 text-white border-green-700 hover:bg-green-600";
-                    badge = "✓";
-                } else if (isActive) {
-                    stateClass = "bg-purple-600 text-white border-purple-900 active shadow-lg";
-                    badge = "⭐";
-                } else if (isLocked) {
-                    stateClass = "bg-amber-100 text-amber-400 border-amber-200 opacity-60";
-                    badge = "🔒";
-                }
-
-                const node = document.createElement('div');
-                node.className = `map-node flex items-center justify-between w-11/12 p-3 rounded-2xl border-4 ${stateClass} transition-all duration-300 cursor-pointer`;
+        <!-- אזור תשובה: הקלדה -->
+        <div id="input-container">
+            <!-- כפתור עזרת חישוב קסומה (למתימטיקה של כיתה ב') -->
+            <div id="math-helper-trigger-container" style="display:none; margin-bottom: 15px;">
+                <button class="math-helper-trigger" onclick="toggleMathHelper()">🪄 עזרת חישוב קסומה</button>
                 
-                if (!isLocked) {
-                    node.onclick = () => selectStage(index, 'map');
+                <!-- לוח הדיסקיות הקסום -->
+                <div id="math-helper-panel" class="math-helper-panel">
+                    <div class="math-helper-title">🔴 לוח דיסקיות קסום 🔵</div>
+                    <p style="font-size: 0.85rem; color: #777; margin: 0;">לחצו על הדיסקיות כדי לספור אותן בקלות!</p>
+                    <div class="helper-dots-container" id="helper-dots-container"></div>
+                    <div class="helper-legend" id="helper-legend"></div>
+                </div>
+            </div>
+
+            <input type="text" id="answer-input" placeholder="כתבו כאן...">
+            <br>
+            <button class="btn-submit" id="submit-btn" onclick="checkAnswer()">בדיקה</button>
+        </div>
+
+        <!-- אזור תשובה: כפתורים -->
+        <div id="options-container" class="options-grid" style="display:none;"></div>
+
+        <div id="feedback"></div>
+    </div>
+
+    <!-- שורת בקרה תחתונה עבור כפתורים -->
+    <div class="bottom-controls">
+        <!-- אלבום המדבקות (מיושר לימין ב-RTL) -->
+        <button class="album-toggle-btn" onclick="toggleStickerAlbum()">📖 פתחו את אלבום המדבקות</button>
+        
+        <!-- לוח הישגים (מיושר לשמאל ב-RTL) -->
+        <button class="map-trigger-btn" onclick="openMapModal()">🏆 הישגים ותחנות</button>
+    </div>
+
+    <!-- אלבום המדבקות הויזואלי (נפתח ומיושר לצד ימין) -->
+    <div id="sticker-album-container" class="sticker-album">
+        <h3>📖 אלבום המדבקות של ארץ הפלאות (10 מדבקות)</h3>
+        <div class="stickers-row">
+            <!-- מדבקה 1 -->
+            <div class="sticker-slot sticker-locked" id="slot-1">
+                🔑
+                <span class="sticker-tooltip">מפתח זהב</span>
+            </div>
+            <!-- מדבקה 2 -->
+            <div class="sticker-slot sticker-locked" id="slot-2">
+                ⏱️
+                <span class="sticker-tooltip">שעון הארנב</span>
+            </div>
+            <!-- מדבקה 3 -->
+            <div class="sticker-slot sticker-locked" id="slot-3">
+                🎩
+                <span class="sticker-tooltip">כובע מטורף</span>
+            </div>
+            <!-- מדבקה 4 -->
+            <div class="sticker-slot sticker-locked" id="slot-4">
+                🫖
+                <span class="sticker-tooltip">קומקום תה</span>
+            </div>
+            <!-- מדבקה 5 -->
+            <div class="sticker-slot sticker-locked" id="slot-5">
+                ♥️
+                <span class="sticker-tooltip">קלף לבבות</span>
+            </div>
+            <!-- מדבקה 6 -->
+            <div class="sticker-slot sticker-locked" id="slot-6">
+                🧪
+                <span class="sticker-tooltip">בקבוק פלא</span>
+            </div>
+            <!-- מדבקה 7 -->
+            <div class="sticker-slot sticker-locked" id="slot-7">
+                🍰
+                <span class="sticker-tooltip">עוגת פלא</span>
+            </div>
+            <!-- מדבקה 8 -->
+            <div class="sticker-slot sticker-locked" id="slot-8">
+                🐱
+                <span class="sticker-tooltip">צ'שייר</span>
+            </div>
+            <!-- מדבקה 9 -->
+            <div class="sticker-slot sticker-locked" id="slot-9">
+                🍄
+                <span class="sticker-tooltip">פטריית הזחל</span>
+            </div>
+            <!-- מדבקה 10 -->
+            <div class="sticker-slot sticker-locked" id="slot-10">
+                🏆
+                <span class="sticker-tooltip">גביע הניצחון</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- לוח הישגים ותחנות אינטראקטיבי בריבוע -->
+    <div id="map-modal-screen" class="map-modal" style="display: none;">
+        <button class="back-btn" onclick="closeMapModal()">🔙 סגור לוח</button>
+        <div class="map-title">🏆 לוח ההישגים של ארץ הפלאות</div>
+        
+        <!-- מד ההתקדמות מיוחד בדרך ל-10 מדבקות -->
+        <p style="color: #6d5415; font-weight: bold; margin: 15px 0 5px 0; font-size: 1.1rem;">הדרך שלך ל-10 מדבקות קסומות:</p>
+        <div class="progress-container">
+            <div class="progress-bar-fill" id="royal-progress-bar"></div>
+            <div class="progress-text" id="royal-progress-text">0 / 10 מדבקות</div>
+        </div>
+        <p style="color: #8b6508; font-size: 0.9rem; margin-bottom: 20px;" id="royal-congrats-hint">הגעת ל-10 מדבקות? הפתעה מלכותית מחכה לך!</p>
+
+        <!-- גריד ריבועים צבעוניים לתחנות -->
+        <div class="achievements-grid">
+            <!-- שעון הארנב -->
+            <div class="achievement-card" id="card-clock" onclick="travelTo('clock')">
+                <div class="achievement-emoji">⏱️</div>
+                <div class="achievement-name">השעון של הארנב</div>
+                <div class="achievement-status" id="status-clock">⏳ בתהליך</div>
+            </div>
+            <!-- מסיבת התה -->
+            <div class="achievement-card" id="card-tea" onclick="travelTo('tea')">
+                <div class="achievement-emoji">☕</div>
+                <div class="achievement-name">מסיבת התה</div>
+                <div class="achievement-status" id="status-tea">⏳ בתהליך</div>
+            </div>
+            <!-- משמר המלכה -->
+            <div class="achievement-card" id="card-queen" onclick="travelTo('queen')">
+                <div class="achievement-emoji">♥️</div>
+                <div class="achievement-name">משמר המלכה</div>
+                <div class="achievement-status" id="status-queen">⏳ בתהליך</div>
+            </div>
+            <!-- חיוך החתול -->
+            <div class="achievement-card" id="card-cat" onclick="travelTo('cat')">
+                <div class="achievement-emoji">🐱</div>
+                <div class="achievement-name">חיוך החתול</div>
+                <div class="achievement-status" id="status-cat">⏳ בתהליך</div>
+            </div>
+            <!-- הזחל החכם -->
+            <div class="achievement-card" id="card-logic" onclick="travelTo('logic')">
+                <div class="achievement-emoji">🐛</div>
+                <div class="achievement-name">הזחל החכם</div>
+                <div class="achievement-status" id="status-logic">⏳ בתהליך</div>
+            </div>
+            <!-- טווידל די ודאם -->
+            <div class="achievement-card" id="card-math" onclick="travelTo('math')">
+                <div class="achievement-emoji">👬</div>
+                <div class="achievement-name">טווידל די ודאם</div>
+                <div class="achievement-status" id="status-math">⏳ בתהליך</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- מסך משימת הצלה פעילה (פיזית) -->
+    <div id="rescue-screen" class="rescue-overlay" style="display: none;"></div>
+
+    <!-- מסך הצלחה מלכותי -->
+    <div id="success-screen" class="success-overlay" style="display: none;" onclick="dismissCelebration()">
+        <div class="royal-emoji">👑😊</div>
+        <div class="royal-text">את/ה מלכ/ה!</div>
+        <div class="royal-subtext">כל הכבוד! איזה קסם של תשובה ✨</div>
+        <div class="royal-dismiss-tip">לחצו על מקש הרווח או על המסך כדי להמשיך 💫</div>
+    </div>
+
+    <!-- מסך ניצחון מיוחד בהגעה ל-10 מדבקות -->
+    <div id="grand-victory-screen" class="grand-victory-overlay" style="display: none;">
+        <div class="royal-emoji" style="animation: royalPulse 1s infinite ease-in-out;">🏆👑🎉</div>
+        <div class="royal-text" style="color: #d84315;">אלופ/ת ארץ הפלאות!</div>
+        <p style="font-size: 1.4rem; font-weight: bold; color: #5d4037; max-width: 80%; margin: 15px auto;">
+            מדהים! אספתם בהצלחה 10 מדבקות קסומות בארנק המלכותי שלכם!
+        </p>
+        <p style="font-size: 1.2rem; color: #795548; font-weight: bold; margin-bottom: 30px;">
+            כל הכבוד, אתם המלכים הרשמיים של המשחק! 👑🦁
+        </p>
+        <button class="btn-submit" onclick="resetGame()" style="background: linear-gradient(135deg, #ffb74d 0%, #ffa726 100%); color: white; padding: 15px 50px;">לשחק מחדש 🔄</button>
+    </div>
+</div>
+
+<script>
+    let stickers = 0;
+    let currentMode = '';
+    let targetAnswer = '';
+    let isAnsweringLocked = false;
+    let lastPhysicalTask = "";
+    let celebrationTimeout = null; // מעקב אחר טיימר הגיבוי של מסך ההצלחה
+    
+    // שמירת הנתונים המדויקים של התרגיל הנוכחי לצורך המחשה
+    let currentMathData = { n1: 0, n2: 0, op: '+' };
+
+    // מעקב אחר התחנות שהושלמו בהצלחה
+    const completedStations = {
+        clock: false,
+        tea: false,
+        queen: false,
+        cat: false,
+        logic: false,
+        math: false
+    };
+
+    // אובייקט AudioContext לסינתזת צלילים דינמיים ללא קבצים חיצוניים
+    let audioCtx = null;
+
+    // אתחול האודיו בנגיעה ראשונה
+    function initAudio() {
+        if (!audioCtx) {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+    }
+
+    // צליל הצלחה קסום (ארפג'ו נבל עולה)
+    function playSuccessSound() {
+        initAudio();
+        if (!audioCtx) return;
+
+        const now = audioCtx.currentTime;
+        const notes = [261.63, 329.63, 392.00, 523.25, 659.25, 1046.50]; // C4, E4, G4, C5, E5, C6
+        notes.forEach((freq, idx) => {
+            const osc = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(freq, now + idx * 0.12);
+            
+            gainNode.gain.setValueAtTime(0, now + idx * 0.12);
+            gainNode.gain.linearRampToValueAtTime(0.12, now + idx * 0.12 + 0.05);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.12 + 0.4);
+            
+            osc.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            
+            osc.start(now + idx * 0.12);
+            osc.stop(now + idx * 0.12 + 0.4);
+        });
+    }
+
+    // צליל קפיצה פיזי ומשעשע (Boing Sound)
+    function playBoingSound() {
+        initAudio();
+        if (!audioCtx) return;
+
+        const now = audioCtx.currentTime;
+        const osc = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
+        
+        osc.type = 'triangle';
+        
+        // ירידה ועלייה מהירה בתדר ליצירת תחושת קפיציות
+        osc.frequency.setValueAtTime(150, now);
+        osc.frequency.exponentialRampToValueAtTime(320, now + 0.15);
+        osc.frequency.exponentialRampToValueAtTime(110, now + 0.4);
+        
+        gainNode.gain.setValueAtTime(0.2, now);
+        gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+        
+        osc.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+        
+        osc.start(now);
+        osc.stop(now + 0.4);
+    }
+
+    // מנגנון הזיכרון ומניעת כפילויות (חפיסת קלפים)
+    const decks = {
+        clock: [],
+        queen: [],
+        logic: [],
+        cat: [],
+        tea: [],
+        rescue: [] // חפיסה חדשה למניעת חזרות במשימות הפיזיות!
+    };
+
+    const lastAskedMath = [];
+
+    // מאגרי שאלות מגוונים ועשירים במיוחד לכיתה ב'
+    const dataBank = {
+        clock: [
+            { hour: 3, minute: 0, label: "שלוש בדיוק (03:00)" },
+            { hour: 5, minute: 30, label: "חמש וחצי (05:30)" },
+            { hour: 1, minute: 30, label: "אחת וחצי (01:30)" },
+            { hour: 10, minute: 0, label: "עשר בדיוק (10:00)" },
+            { hour: 4, minute: 15, label: "ארבע ורבע (04:15)" },
+            { hour: 6, minute: 45, label: "רבע לשבע (06:45)" },
+            { hour: 8, minute: 30, label: "שמונה וחצי (08:30)" },
+            { hour: 12, minute: 0, label: "שתים עשרה בדיוק (12:00)" },
+            { hour: 9, minute: 15, label: "תשע ורבע (09:15)" },
+            { hour: 11, minute: 45, label: "רבע לשתים עשרה (11:45)" },
+            { hour: 7, minute: 30, label: "שבע וחצי (07:30)" },
+            { hour: 2, minute: 15, label: "שתיים ורבע (02:15)" }
+        ],
+        queen: [
+            {q: "לב, מעוין, עלה, מלפפון", a: "מלפפון", h: "מי לא שייך לקלפים?"},
+            {q: "אדום, ורוד, כחול, חמוץ", a: "חמוץ", h: "מי לא צבע?"},
+            {q: "חייל, מלכה, מלך, שולחן", a: "שולחן", h: "מי לא דמות בארמון?"},
+            {q: "כתר, שרביט, גלימה, תפוח", a: "תפוח", h: "מי לא שייך למלכה?"},
+            {q: "ורד, רקפת, כלב, אירוס", a: "כלב", h: "מי לא פרח בגינה?"},
+            {q: "שבלול, צפרדע, קיפוד, עיפרון", a: "עיפרון", h: "מי אינו בעל חיים?"},
+            {q: "מזלג, כף, כפית, כובע", a: "כובע", h: "מי לא שייך לכלי האוכל?"}
+        ],
+        logic: [
+            {q: "פטריה", a: "נקבה"}, {q: "כובע", a: "זכר"}, {q: "ארנב", a: "זכר"}, 
+            {q: "מלכה", a: "נקבה"}, {q: "שולחן", a: "זכר"}, {q: "כוס", a: "נקבה"},
+            {q: "עוגה", a: "נקבה"}, {q: "מפתח", a: "זכר"}, {q: "דלת", a: "נקבה"},
+            {q: "תיק", a: "זכר"}, {q: "מנורה", a: "נקבה"}, {q: "כדור", a: "זכר"}
+        ],
+        cat: ["חיוך", "חתול", "נעלם", "עץ", "זנב", "שיניים", "סגול", "פלאות", "אליס", "יער", "כובע", "ספר", "ארנב", "מלכה", "דלת"],
+        tea: [
+            {q: "מהי ספרת העשרות במספר 358?", a: "5", h: "הביטו היטב במיקום העשרות!"},
+            {q: "מהי ספרת היחידות במספר 358?", a: "8", h: "הביטו היטב במיקום היחידות!"},
+            {q: "מהי ספרת המאות במספר 358?", a: "3", h: "הביטו היטב במיקום המאות!"},
+            {q: "מהי ספרת העשרות במספר 724?", a: "2", h: "הביטו היטב במיקום העשרות!"},
+            {q: "מהי ספרת היחידות במספר 724?", a: "4", h: "הביטו היטב במיקום היחידות!"},
+            {q: "מהי ספרת המאות במספר 724?", a: "7", h: "הביטו היטב במיקום המאות!"},
+            {q: "מהי ספרת העשרות במספר 916?", a: "1", h: "הביטו היטב במיקום העשרות!"},
+            {q: "מהי ספרת היחידות במספר 916?", a: "6", h: "הביטו היטב במיקום היחידות!"},
+            {q: "מהי ספרת המאות במספר 916?", a: "9", h: "הביטו היטב במיקום המאות!"},
+            {q: "מהי ספרת העשרות במספר 482?", a: "8", h: "הביטו היטב במיקום העשרות!"},
+            {q: "מהי ספרת היחידות במספר 482?", a: "2", h: "הביטו היטב במיקום היחידות!"},
+            {q: "מהי ספרת המאות במספר 482?", a: "4", h: "הביטו היטב במיקום המאות!"},
+            {q: "מהי ספרת העשרות במספר 603?", a: "0", h: "הביטו היטב במיקום העשרות!"},
+            {q: "מהי ספרת היחידות במספר 603?", a: "3", h: "הביטו היטב במיקום היחידות!"},
+            {q: "מהי ספרת המאות במספר 603?", a: "6", h: "הביטו היטב במיקום המאות!"}
+        ]
+    };
+
+    // מאגר משימות הצלה פיזיות (הפסקת פעילות מגוונת)
+    const physicalRescueTasks = [
+        "קפצו 5 פעמים ברציפות על רגל שמאל!",
+        "קפצו 5 פעמים ברציפות על רגל ימין!",
+        "געו בקצה האף שלכם עם האצבע 5 פעמים!",
+        "מתחו את הידיים גבוה-גבוה לשמיים כמו ענק בארץ הפלאות (למשך 5 שניות)!",
+        "הסתובבו פעם אחת סביב עצמכם לאט כמו מחוג של שעון!",
+        "מחאו כפיים 6 פעמים בשמחה ובקצב של מסיבת תה!",
+        "עשו פרצוף סופר מצחיק ומרוח כמו חיוך החתול של צ'שייר!",
+        "צעדו במקום 8 צעדים כמו חייל קלפים אמיץ של המלכה!",
+        "קחו שתי נשימות עמוקות מאוד, ונשפו אותן לאט כמו הזחל על הפטרייה!",
+        "נופפו לשלום בשתי הידיים הכי מהר שאתם יכולים במשך 5 שניות!",
+        "עמדו על רגל אחת ונופפו בשלום עם שתי הידיים 3 פעמים!",
+        "סובבו את הראש מצד לצד לאט ובזהירות כמו חתול שמחליט לאן ללכת (4 פעמים)!",
+        "דמו שאתם שותים כוס תה חם במסיבה של הכובען - עשו קולות 'שלוק' מצחיקים!",
+        "קפצו במקום כמו צפרדע של המלכה 5 קפיצות קטנות!",
+        "העמידו פנים שאתם גדלים לגובה ומותחים את הצוואר כמו אליס שאכלה מהעוגה!",
+        "העמידו פנים שאתם קטנים-קטנים ומתכווצים כמו אליס ששתתה מהבקבוק!",
+        "שפשפו את הידיים זו בזו חזק-חזק עד שהן ירגישו חמימות ונעימות (5 שניות)!",
+        "עשו סיבובים גדולים עם הכתפיים קדימה ואחורה 5 פעמים!",
+        "הסתכלו למעלה לתקרה ולמטה לרצפה 4 פעמים ובדקו שאין שם ארנבים!",
+        "נופפו באצבעות הידיים כאילו אתם מנגנים בפסנתר קסום באוויר!",
+        "ציירו עיגול ענק באוויר עם שתי הידיים ביחד כמו השעון של הארנב!",
+        "לחשו את השם שלכם 3 פעמים כמו סוד סודי בארץ הפלאות!",
+        "ספרו לאחור מ-5 עד 1 בקול של רובוט קטן!",
+        "החליקו את היד על המצח ואמרו בקול: 'אוף, כמעט איחרתי!' כמו הארנב הלבן.",
+        "עשו תנועה של כתיבה באוויר של האות הראשונה של שמכם, בגודל ענק!",
+        "רפרפו בריסים שלכם מהר-מהר כמו פרפר צבעוני שיושב על פטרייה!"
+    ];
+
+    function toggleStickerAlbum() {
+        const album = document.getElementById('sticker-album-container');
+        const btn = document.querySelector('.album-toggle-btn');
+        if (album.style.display === 'block') {
+            album.style.display = 'none';
+            btn.innerText = "📖 פתחו את אלבום המדבקות";
+        } else {
+            album.style.display = 'block';
+            btn.innerText = "📕 סגרו את אלבום המדבקות";
+        }
+    }
+
+    // פתיחה ועדכון של לוח ההישגים בריבוע
+    function openMapModal() {
+        initAudio();
+        const mapModal = document.getElementById('map-modal-screen');
+        
+        // עדכון מצב הוויזואלי של כל כרטיסיות התחנה בריבוע
+        const stationKeys = ['clock', 'tea', 'queen', 'cat', 'logic', 'math'];
+        stationKeys.forEach(key => {
+            const card = document.getElementById('card-' + key);
+            const statusLabel = document.getElementById('status-' + key);
+            
+            if (completedStations[key]) {
+                card.classList.add('card-completed');
+                statusLabel.innerText = "הושלם! ✅";
+            } else {
+                card.classList.remove('card-completed');
+                statusLabel.innerText = "⏳ בתהליך";
+            }
+        });
+
+        // עדכון מד ההתקדמות לקראת 10 מדבקות
+        const maxStickersGoal = 10;
+        const currentPercentage = Math.min((stickers / maxStickersGoal) * 100, 100);
+        const progressBarFill = document.getElementById('royal-progress-bar');
+        const progressText = document.getElementById('royal-progress-text');
+        
+        progressBarFill.style.width = currentPercentage + '%';
+        progressText.innerText = stickers + " / " + maxStickersGoal + " מדבקות";
+
+        if (stickers >= maxStickersGoal) {
+            document.getElementById('royal-congrats-hint').innerHTML = "👑 <strong>וואו! הגעתם ליעד 10 המדבקות המלכותיות!</strong> 👑";
+        } else {
+            document.getElementById('royal-congrats-hint').innerHTML = "הגעת ל-10 מדבקות? הפתעה מלכותית מחכה לך!";
+        }
+
+        mapModal.style.display = 'flex';
+    }
+
+    function closeMapModal() {
+        document.getElementById('map-modal-screen').style.display = 'none';
+    }
+
+    // מעבר תחנה ישיר מתוך הריבועים
+    function travelTo(mode) {
+        closeMapModal();
+        start(mode);
+    }
+
+    // פונקציית שליפה חכמה מחפיסה ייחודית (מונעת לחלוטין חזרות עד לריקון החפיסה)
+    function getNextFromDeck(modeKey) {
+        if (!decks[modeKey] || decks[modeKey].length === 0) {
+            let originalData = [];
+            if (modeKey === 'rescue') {
+                originalData = [...physicalRescueTasks];
+            } else if (dataBank[modeKey]) {
+                originalData = [...dataBank[modeKey]];
+            } else {
+                return null;
+            }
+            
+            // ערבוב החפיסה (Fisher-Yates)
+            for (let i = originalData.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [originalData[i], originalData[j]] = [originalData[j], originalData[i]];
+            }
+            decks[modeKey] = originalData;
+        }
+        return decks[modeKey].pop();
+    }
+
+    // פונקציה ליצירת שעון אנלוגי מבוסס SVG בצורה דינמית
+    function generateClockSVG(hour, minute) {
+        const hourAngle = (hour * 30) + (minute * 0.5);
+        const minuteAngle = minute * 6;
+        
+        let svg = `<svg class="analog-clock" viewBox="0 0 200 200">
+            <!-- רקע השעון -->
+            <circle cx="100" cy="100" r="95" stroke="#2c3e50" stroke-width="6" fill="#ffffff" />
+            <circle cx="100" cy="100" r="88" stroke="#a5d6f7" stroke-width="2" fill="none" />
+            
+            <!-- נקודות ומספרי השעות -->`;
+        
+        for (let h = 1; h <= 12; h++) {
+            const angle = h * 30 * Math.PI / 180;
+            const x = 100 + 72 * Math.sin(angle);
+            const y = 100 - 72 * Math.cos(angle);
+            svg += `<text x="${x}" y="${y}" font-size="16" font-weight="bold" text-anchor="middle" dominant-baseline="central" fill="#2c3e50">${h}</text>`;
+        }
+        
+        svg += `
+            <!-- מחוג השעות (עבה וקצר יותר) -->
+            <line x1="100" y1="100" x2="100" y2="52" stroke="#2c3e50" stroke-width="6" stroke-linecap="round" transform="rotate(${hourAngle} 100 100)" />
+            
+            <!-- מחוג הדקות (ארוך ודק יותר) -->
+            <line x1="100" y1="100" x2="100" y2="30" stroke="#ff5252" stroke-width="3" stroke-linecap="round" transform="rotate(${minuteAngle} 100 100)" />
+            
+            <!-- פין מרכזי -->
+            <circle cx="100" cy="100" r="6" fill="#2c3e50" />
+            <circle cx="100" cy="100" r="2" fill="#ffffff" />
+        </svg>`;
+        
+        return svg;
+    }
+
+    function shuffle(word) {
+        let a = word.split(""), n = a.length;
+        for(let i = n - 1; i > 0; i--) {
+            let j = Math.floor(Math.random() * (i + 1));
+            [a[i], a[j]] = [a[j], a[i]];
+        }
+        if (a.join("") === word && word.length > 1) {
+            return shuffle(word);
+        }
+        return a.join(" - ");
+    }
+
+    // פונקציית שליטה לפתיחה וסגירה של פאנל העזר לחשבון
+    function toggleMathHelper() {
+        const panel = document.getElementById('math-helper-panel');
+        if (panel.style.display === 'block') {
+            panel.style.display = 'none';
+        } else {
+            panel.style.display = 'block';
+            buildMathHelperBoard();
+        }
+    }
+
+    // בניית לוח הדיסקיות אינטראקטיבי
+    let globalCounterCount = 0; // למעקב אחר ספירת הילד בדיסקיות
+    function buildMathHelperBoard() {
+        const container = document.getElementById('helper-dots-container');
+        const legend = document.getElementById('helper-legend');
+        container.innerHTML = '';
+        globalCounterCount = 0;
+
+        const { n1, n2, op } = currentMathData;
+
+        // 1. יצירת הדיסקיות של המספר הראשון (תמיד כחולות)
+        for (let i = 1; i <= n1; i++) {
+            const dot = document.createElement('div');
+            dot.className = 'helper-dot dot-blue';
+            dot.dataset.countedState = 'false';
+            dot.onclick = () => onDotClick(dot);
+            container.appendChild(dot);
+        }
+
+        // 2. יצירת הדיסקיות של המספר השני (אדומות בחיבור, או מסומנות במחוקות בחיסור)
+        if (op === '+') {
+            for (let i = 1; i <= n2; i++) {
+                const dot = document.createElement('div');
+                dot.className = 'helper-dot dot-red';
+                dot.dataset.countedState = 'false';
+                dot.onclick = () => onDotClick(dot);
+                container.appendChild(dot);
+            }
+            // יצירת מקרא לחיבור
+            legend.innerHTML = `
+                <div class="legend-item"><span class="legend-box" style="background:#4fc3f7; border:1px solid #0288d1;"></span> <span>מספר ראשון (${n1})</span></div>
+                <div class="legend-item"><span class="legend-box" style="background:#ff8a80; border:1px solid #d32f2f;"></span> <span>מספר שני (${n2})</span></div>
+            `;
+        } else {
+            // בחיסור, הופכים n2 דיסקיות מתוך ה-n1 למחוקות
+            const dots = container.querySelectorAll('.helper-dot');
+            // נסמן את n2 הדיסקיות האחרונות כמחוקות
+            for (let i = 0; i < n2; i++) {
+                const targetIdx = n1 - 1 - i;
+                if (targetIdx >= 0) {
+                    dots[targetIdx].className = 'helper-dot dot-subtracted';
+                    dots[targetIdx].onclick = null; // לא ניתנות לספירה רגילה בחיסור
                 }
-
-                node.innerHTML = `
-                    <div class="flex items-center gap-3">
-                        <span class="text-2xl font-black">${letter}</span>
-                        <div class="text-right">
-                            <span class="text-sm font-bold block">האות ${letter}</span>
-                            <span class="text-[10px] opacity-90">${getStageDescription(letter)}</span>
-                        </div>
-                    </div>
-                    <div class="flex items-center gap-2">
-                        ${globalBests.letters[letter] ? `<span class="text-[10px] bg-yellow-300 text-yellow-800 px-2 py-0.5 rounded-full font-bold">🏆 ${globalBests.letters[letter].toFixed(1)} ש'</span>` : ''}
-                        <span class="text-lg font-bold">${badge}</span>
-                    </div>
-                `;
-
-                pathContainer.appendChild(node);
-            });
-
-            setTimeout(() => {
-                const activeNode = document.querySelector('.map-node.active');
-                if (activeNode) activeNode.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }, 300);
-        }
-
-        // תיאור האותיות
-        function getStageDescription(letter) {
-            if (letter === "א") return "אבטיח, אגס, אננס";
-            if (letter === "ב") return "בלון, בית, בננה, ביצה";
-            if (letter === "ג") return "גלידה, גזר, גמל";
-            if (letter === "ד") return "דג, דובי, דלת";
-            if (letter === "ה") return "הר, הליקופטר";
-            if (letter === "ו") return "ורד";
-            if (letter === "ז") return "זברה, זיתים";
-            if (letter === "ח") return "חתול, חלה, חיפושית";
-            if (letter === "ט") return "טלפון, טרקטור";
-            if (letter === "י") return "ירח, ילקוט";
-            if (letter === "כ") return "כלב, כדור, כובע, כוכב";
-            if (letter === "ל") return "לימון, לב, לחם";
-            if (letter === "מ") return "מטריה, מכונית, מלפפון, מיץ, מפתח";
-            if (letter === "נ") return "נעל, נר, נוצה";
-            if (letter === "ס") return "סוס, ספר, סירה";
-            if (letter === "ע") return "עוגה, ענן, עץ";
-            if (letter === "פ") return "פרפר, פיל, פרח, פטריה";
-            if (letter === "צ") return "צב, ציפור";
-            if (letter === "ק") return "קוף, קשת";
-            if (letter === "ר") return "רכבת, רובוט";
-            if (letter === "ש") return "שמש, שעון";
-            if (letter === "ת") return "תפוח, תות, תיק";
-            return "";
-        }
-
-        // הצגת פרטי שער החשבון לקראת תחילת המשחק
-        function renderMathStage() {
-            const pathContainer = document.getElementById('sub-menu-path');
-            pathContainer.innerHTML = `
-                <div class="p-4 text-center shadow-sm bg-stone-50 rounded-2xl">
-                    <p class="text-base text-gray-700 font-bold mb-4">בפורטל זה תקבלו תרגילים ויזואליים חמודים של חיבור וחיסור. תצטרכו להחליט אם התוצאה המוצגת נכונה או שגויה!</p>
-                    <div class="p-3 bg-emerald-50 border-2 border-emerald-200 rounded-2xl inline-block mb-4 text-sm font-bold text-emerald-800">
-                        🍎 + 🍎🍎 = 3?  ➔  <span class="text-green-600">נכון! (✓)</span>
-                    </div>
-                    ${globalBests.math ? `<p class="text-sm font-black text-purple-700">🏆 השיא הנוכחי שלכם: ${globalBests.math.toFixed(1)} שניות!</p>` : ''}
-                </div>
+            }
+            // יצירת מקרא לחיסור
+            legend.innerHTML = `
+                <div class="legend-item"><span class="legend-box" style="background:#4fc3f7; border:1px solid #0288d1;"></span> <span>המספר הגדול (${n1})</span></div>
+                <div class="legend-item"><span class="legend-box" style="background:#e0e0e0; border:1px dashed #9e9e9e;"></span> <span>דיסקיות שנמחקו (${n2})</span></div>
             `;
-            const startBtn = document.getElementById('start-button');
-            startBtn.classList.remove('hidden');
         }
+    }
 
-        // הצגת פרטי שער משחק הבונוס הארקייד (הלא לימודי)
-        function renderBonusStage() {
-            const pathContainer = document.getElementById('sub-menu-path');
-            pathContainer.innerHTML = `
-                <div class="p-4 text-center shadow-sm bg-stone-50 rounded-2xl">
-                    <p class="text-base text-gray-700 font-bold mb-4">ברוכים הבאים למשחק הבונוס המשוגע! 🎈<br>בלונים צבעוניים יעלו על המסך. פוצצו כמה שיותר בלונים מהר-מהר! היזהרו מבלוני פצצה 💣 ונסו לפוצץ בלוני כוכב 🌟!</p>
-                    <div class="p-3 bg-rose-50 border-2 border-rose-200 rounded-2xl inline-block mb-4 text-sm font-bold text-rose-800">
-                        🎈 = 1 נקודה | 🌟 = 3 נקודות | 💣 = מינוס 2 נקודות!
-                    </div>
-                    ${globalBests.bonus ? `<p class="text-sm font-black text-purple-700">🏆 השיא הנוכחי שלכם: ${globalBests.bonus} בלונים!</p>` : ''}
-                </div>
-            `;
-            const startBtn = document.getElementById('start-button');
-            startBtn.classList.remove('hidden');
-        }
-
-        function initAudio() {
-            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        }
-
-        function playSound(freq, type='sine') {
-            if (!audioCtx) return;
+    // לחיצה על דיסקית לצורך ספירה של התלמיד
+    function onDotClick(dotElement) {
+        initAudio();
+        // מנגנון סאונד קטן ללחיצה
+        if (audioCtx) {
             const osc = audioCtx.createOscillator();
             const gain = audioCtx.createGain();
-            osc.type = type;
-            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
+            osc.frequency.setValueAtTime(440, audioCtx.currentTime);
+            gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1);
             osc.connect(gain);
             gain.connect(audioCtx.destination);
             osc.start();
-            osc.stop(audioCtx.currentTime + 0.2);
+            osc.stop(audioCtx.currentTime + 0.1);
         }
 
-        // התחלת המשחק (סגירת וילונות, טעינת משחק ופתיחה חגיגית מחדש)
-        function startGame() {
-            initAudio();
+        if (dotElement.dataset.countedState === 'false') {
+            globalCounterCount++;
+            dotElement.dataset.countedState = 'true';
+            dotElement.classList.add('dot-counted');
+            dotElement.innerText = globalCounterCount;
+        } else {
+            // אם לוחצים שוב - מאפסים את הספירה הספציפית הזו ומורידים את המספר
+            dotElement.dataset.countedState = 'false';
+            dotElement.classList.remove('dot-counted');
+            dotElement.innerText = '';
+        }
+    }
+
+    function generateQuestion() {
+        const qArea = document.getElementById('question-area');
+        const hArea = document.getElementById('world-hint');
+        const inputCont = document.getElementById('input-container');
+        const optsCont = document.getElementById('options-container');
+        const feedback = document.getElementById('feedback');
+        const mathHelperTrigger = document.getElementById('math-helper-trigger-container');
+        const mathHelperPanel = document.getElementById('math-helper-panel');
+        
+        isAnsweringLocked = false;
+        feedback.innerText = '';
+        document.getElementById('answer-input').value = '';
+        document.getElementById('submit-btn').disabled = false;
+        qArea.innerHTML = '';
+        optsCont.innerHTML = '';
+        qArea.classList.remove('math-style');
+        
+        inputCont.style.display = 'block';
+        optsCont.style.display = 'none';
+        
+        // כברירת מחדל מונעים את כפתור עזרת החישוב
+        mathHelperTrigger.style.display = 'none';
+        mathHelperPanel.style.display = 'none';
+
+        if(currentMode === 'clock') {
+            document.getElementById('world-title').innerText = "⏱️ השעון של הארנב";
+            hArea.innerText = "הביטו בשעון המחוגים - מה השעה?";
+            inputCont.style.display = 'none';
+            optsCont.style.display = 'grid';
+
+            let item = getNextFromDeck('clock');
+            targetAnswer = item.label;
+
+            qArea.innerHTML = generateClockSVG(item.hour, item.minute);
+
+            let wrongs = dataBank.clock.filter(c => c.label !== item.label).sort(() => 0.5 - Math.random()).slice(0, 3);
+            let choices = [item, ...wrongs].sort(() => 0.5 - Math.random());
+
+            choices.forEach(c => {
+                let btn = document.createElement('button');
+                btn.className = 'opt-btn';
+                btn.innerText = c.label;
+                btn.onclick = () => checkAnswer(c.label);
+                optsCont.appendChild(btn);
+            });
+        } 
+        else if(currentMode === 'tea') {
+            document.getElementById('world-title').innerText = "☕ מסיבת התה";
+            let item = getNextFromDeck('tea');
+            hArea.innerText = item.h;
+            qArea.innerText = item.q;
+            targetAnswer = item.a;
+        }
+        else if(currentMode === 'queen') {
+            document.getElementById('world-title').innerText = "♥️ משמר המלכה";
+            let item = getNextFromDeck('queen');
+            hArea.innerText = item.h;
             
-            // 1. סוגרים את הווילונות למעבר תיאטרלי
-            document.body.classList.remove('curtain-open');
+            let choices = item.q.split(/[,，]/).map(s => s.trim());
+            qArea.innerText = choices.join('  •  ');
+            targetAnswer = item.a.trim();
+
+            inputCont.style.display = 'none';
+            optsCont.style.display = 'grid';
+
+            choices.forEach(choice => {
+                let btn = document.createElement('button');
+                btn.className = 'opt-btn';
+                btn.innerText = choice;
+                btn.onclick = () => checkAnswer(choice);
+                optsCont.appendChild(btn);
+            });
+        }
+        else if(currentMode === 'cat') {
+            document.getElementById('world-title').innerText = "🐱 חיוך החתול";
+            hArea.innerText = "איזו מילה מסתתרת באותיות?";
+            inputCont.style.display = 'none';
+            optsCont.style.display = 'grid';
             
-            // 2. ממתינים 1.2 שניות (זמן סגירת הווילון) ומעלים את המשחק
-            setTimeout(() => {
-                document.getElementById('portal-hub-container').style.display = 'none';
-                setupStagePool();
-                
-                if (currentGameType !== 'bonus') {
-                    nextRound();
-                } else {
-                    startBalloonGame();
+            let correct = getNextFromDeck('cat');
+            targetAnswer = correct;
+            qArea.innerText = shuffle(correct);
+            
+            let wrongs = dataBank.cat.filter(w => w !== correct).sort(()=>0.5-Math.random()).slice(0,3);
+            let choices = [correct, ...wrongs].sort(()=>0.5-Math.random());
+            
+            choices.forEach(c => {
+                let btn = document.createElement('button');
+                btn.className = 'opt-btn';
+                btn.innerText = c;
+                btn.onclick = () => checkAnswer(c);
+                optsCont.appendChild(btn);
+            });
+        }
+        else if(currentMode === 'logic') {
+            document.getElementById('world-title').innerText = "🐛 הזחל החכם";
+            hArea.innerText = "האם המילה היא זכר או נקבה?";
+            let item = getNextFromDeck('logic');
+            qArea.innerText = item.q;
+            targetAnswer = item.a;
+
+            inputCont.style.display = 'none';
+            optsCont.style.display = 'grid';
+
+            ["זכר", "נקבה"].forEach(gender => {
+                let btn = document.createElement('button');
+                btn.className = 'opt-btn';
+                btn.innerText = gender;
+                btn.onclick = () => checkAnswer(gender);
+                optsCont.appendChild(btn);
+            });
+        }
+        else if(currentMode === 'math') {
+            document.getElementById('world-title').innerText = "👬 טווידל-די ודאם";
+            hArea.innerText = "פתרו את התרגיל (משמאל לימין):";
+            qArea.classList.add('math-style');
+            
+            let n1, n2, op, ans;
+            // חישוב מותאם לכיתה ב' - מספרים נמוכים (סביב 10-25) ללא תוצאה שלילית
+            do {
+                n1 = Math.floor(Math.random()*15)+10;
+                n2 = Math.floor(Math.random()*9)+1;
+                op = Math.random() > 0.5 ? '+' : '-';
+                ans = op === '+' ? n1 + n2 : n1 - n2;
+            } while (lastAskedMath.includes(`${n1}${op}${n2}`));
+            
+            // שמירת הפרמטרים לצורך עזרת החישוב
+            currentMathData = { n1, n2, op };
+            
+            // הצגת כפתור עזרת החישוב הקסומה!
+            mathHelperTrigger.style.display = 'block';
+
+            lastAskedMath.push(`${n1}${op}${n2}`);
+            if (lastAskedMath.length > 15) lastAskedMath.shift();
+            
+            targetAnswer = ans.toString();
+            qArea.innerText = `${n1} ${op} ${n2} = ?`;
+        }
+
+        document.getElementById('answer-input').focus();
+    }
+
+    // הפעלת משימת הצלה פיזית וקלה במקרה של טעות (ללא שינוי בניקוד)
+    function triggerRescueTask() {
+        playBoingSound();
+        const rescueScreen = document.getElementById('rescue-screen');
+        
+        // שליפה מתוך חפיסה ייחודית כדי למנוע חזרתיות לגמרי!
+        let randomTask = getNextFromDeck('rescue');
+        
+        rescueScreen.innerHTML = `
+            <h2 style="color: var(--queen-red); margin-bottom: 10px; font-size: 2rem;">🌟 משימת הפסקה פעילה! 🌟</h2>
+            <p style="font-size: 1.15rem; margin-bottom: 25px; color: #555; max-width: 90%; margin-left: auto; margin-right: auto;">
+                אופס, לא נורא! בשביל להמשיך להרפתקה הבאה, בצעו את המשימה הפיזית הזו (המדבקות שלכם לא משתנות!):
+            </p>
+            <div class="problem-display" style="font-size: 2rem; min-height: auto; margin-bottom: 35px; color: var(--text-dark); font-weight: bold; background: #fff3e0; padding: 25px; border-radius: 20px; border: 3px dashed #ffb74d;">
+                🤸 ${randomTask}
+            </div>
+            <button class="btn-submit" onclick="completeRescue()" style="background: var(--mad-hatter-green); color: white; padding: 15px 60px;">עשיתי! המשך לחידה הבאה 👍</button>
+        `;
+        
+        rescueScreen.style.display = 'flex';
+    }
+
+    function completeRescue() {
+        const rescueScreen = document.getElementById('rescue-screen');
+        rescueScreen.style.display = 'none';
+        generateQuestion();
+    }
+
+    // עדכון אלבום המדבקות הויזואלי בתחתית בהתאם לכמות
+    function updateStickerAlbum() {
+        const activeStickersCount = Math.min(stickers, 10);
+        for (let i = 1; i <= 10; i++) {
+            const slot = document.getElementById('slot-' + i);
+            if (i <= activeStickersCount) {
+                if (slot.classList.contains('sticker-locked')) {
+                    slot.classList.remove('sticker-locked');
+                    slot.classList.add('sticker-unlocked');
                 }
-                
-                // 3. פותחים מחדש את הווילונות כדי לחשוף את לוח המשחק!
-                document.body.classList.add('curtain-open');
-            }, 1200);
-        }
-
-        function backToMap() {
-            document.getElementById('next-level-msg').classList.remove('show');
-            document.body.classList.remove('curtain-open');
-            
-            const startScreen = document.getElementById('portal-hub-container');
-            startScreen.style.display = 'flex';
-            startScreen.style.opacity = '1';
-            
-            setTimeout(() => {
-                document.body.classList.add('curtain-open');
-            }, 100);
-            
-            selectPortal(currentGameType);
-        }
-
-        function startTimer() {
-            stopTimer();
-            startTime = Date.now();
-            timerInterval = setInterval(() => {
-                const elapsed = (Date.now() - startTime) / 1000;
-                document.getElementById('timer-display').innerText = elapsed.toFixed(1);
-            }, 100);
-        }
-
-        function stopTimer() {
-            if (timerInterval) clearInterval(timerInterval);
-        }
-
-        function shuffle(array) {
-            for (let i = array.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [array[i], array[j]] = [array[j], array[i]];
-            }
-            return array;
-        }
-
-        // בניית חפיסה מאוזנת ללא כפילויות וללא רצפים משעממים
-        function generateBalancedPool(matches, nonMatches) {
-            const selectedMatches = [];
-            for (let i = 0; i < 5; i++) {
-                selectedMatches.push(matches[i % matches.length]);
-            }
-
-            const selectedNonMatches = [];
-            for (let i = 0; i < 5; i++) {
-                selectedNonMatches.push(nonMatches[i % nonMatches.length]);
-            }
-            
-            let attempts = 0;
-            let finalPool = [];
-            
-            while (attempts < 150) {
-                let temp = [...selectedMatches, ...selectedNonMatches];
-                shuffle(temp);
-                
-                let valid = true;
-                let consecutiveCount = 1;
-                for (let i = 1; i < temp.length; i++) {
-                    const prevIsMatch = temp[i-1].isCorrect;
-                    const currIsMatch = temp[i].isCorrect;
-                    if (prevIsMatch === currIsMatch) {
-                        consecutiveCount++;
-                        if (consecutiveCount > 2) {
-                            valid = false;
-                            break;
-                        }
-                    } else {
-                        consecutiveCount = 1;
-                    }
-                }
-                
-                if (valid) {
-                    finalPool = temp;
-                    break;
-                }
-                attempts++;
-            }
-            
-            if (finalPool.length === 0) {
-                finalPool = shuffle([...selectedMatches, ...selectedNonMatches]);
-            }
-            return finalPool;
-        }
-
-        // הגדרת מאגר השאלות לכל אחד משלושת הפורטלים
-        function setupStagePool() {
-            roundCount = 0;
-            score = 0; 
-            document.getElementById('score').innerText = score;
-            
-            const imgEl = document.getElementById('current-image');
-            const textDisplay = document.getElementById('text-display');
-            const gameCard = document.getElementById('game-card');
-            const playButtons = document.getElementById('game-play-buttons');
-            const targetInstruction = document.getElementById('target-instruction-card');
-            const balloonArea = document.getElementById('balloon-game-container');
-            const mainGameArea = document.getElementById('main-game-play-area');
-            
-            // איפוס תצוגות מוקדם
-            imgEl.style.display = 'none';
-            textDisplay.style.display = 'none';
-            balloonArea.style.display = 'none';
-            mainGameArea.style.display = 'flex';
-            playButtons.style.display = 'flex';
-            targetInstruction.style.display = 'flex';
-
-            // שינוי תוויות וכותרות ספציפיות
-            document.getElementById('score-label').innerText = "ניקוד:";
-            document.getElementById('record-label').innerText = "שיא משחק:";
-
-            if (currentGameType === 'letters') {
-                document.getElementById('global-best-display').innerText = globalBests.letters[targetLetter] ? globalBests.letters[targetLetter].toFixed(1) + ' ש\'' : '--.-';
-                
-                const matches = shuffle([...items.filter(i => i.letter === targetLetter)]).map(item => ({...item, isCorrect: true}));
-                const nonMatches = shuffle([...items.filter(i => i.letter !== targetLetter)]).map(item => ({...item, isCorrect: false}));
-                
-                currentRoundPool = generateBalancedPool(matches, nonMatches);
-
-            } else if (currentGameType === 'math') {
-                document.getElementById('global-best-display').innerText = globalBests.math ? globalBests.math.toFixed(1) + ' ש\'' : '--.-';
-                
-                // יצירת תרגילי חשבון דינמיים
-                const matches = [];
-                const nonMatches = [];
-                
-                const emojiChoices = ["🍎", "🎈", "⭐️", "🧁", "🍋", "🥕", "🥑"];
-                
-                for (let i = 0; i < 15; i++) {
-                    const num1 = Math.floor(Math.random() * 5) + 1; // 1-5
-                    const num2 = Math.floor(Math.random() * 4) + 1; // 1-4
-                    const isAddition = Math.random() > 0.4; // 60% חיבור
-                    
-                    let equationText = "";
-                    let correctAns = 0;
-                    let emojiString = "";
-                    const chosenEmoji = emojiChoices[Math.floor(Math.random() * emojiChoices.length)];
-
-                    if (isAddition) {
-                        equationText = `${num1} + ${num2} = `;
-                        correctAns = num1 + num2;
-                        emojiString = `${chosenEmoji.repeat(num1)} + ${chosenEmoji.repeat(num2)}`;
-                    } else {
-                        // חיסור (מבטיח תוצאה חיובית)
-                        const bigger = Math.max(num1, num2);
-                        const smaller = Math.min(num1, num2);
-                        equationText = `${bigger} - ${smaller} = `;
-                        correctAns = bigger - smaller;
-                        emojiString = `${chosenEmoji.repeat(bigger)} - ${chosenEmoji.repeat(smaller)}`;
-                    }
-
-                    // יצירת שאלה עם תשובה נכונה
-                    matches.push({
-                        text: equationText + correctAns,
-                        emojis: emojiString,
-                        isCorrect: true
-                    });
-
-                    // יצירת שאלה עם תשובה שגויה
-                    const fakeAns = correctAns + (Math.random() > 0.5 ? 1 : -1);
-                    const safeFakeAns = fakeAns < 0 ? correctAns + 2 : fakeAns;
-                    nonMatches.push({
-                        text: equationText + safeFakeAns,
-                        emojis: emojiString,
-                        isCorrect: false
-                    });
-                }
-
-                currentRoundPool = generateBalancedPool(matches, nonMatches);
-
-            } else if (currentGameType === 'bonus') {
-                // משחק בונוס: פיצוץ בלונים
-                document.getElementById('global-best-display').innerText = globalBests.bonus ? globalBests.bonus + ' בלונים' : '0 בלונים';
-                document.getElementById('score-label').innerText = "בלונים:";
-                document.getElementById('record-label').innerText = "שיא בונוס:";
-            }
-        }
-
-        // הצגת השאלה הבאה בסבב
-        function nextRound() {
-            if (currentRoundPool.length === 0) {
-                handleLevelComplete();
-                return;
-            }
-
-            isProcessing = false; 
-            roundCount++;
-            document.getElementById('progress-text').innerText = `${roundCount}/10`;
-            currentItem = currentRoundPool.pop();
-            
-            const imgEl = document.getElementById('current-image');
-            const emojiEl = document.getElementById('emoji-fallback');
-            const textDisplay = document.getElementById('text-display');
-            const card = document.getElementById('game-card');
-            
-            if (imageLoadTimeout) clearTimeout(imageLoadTimeout);
-            
-            // הגדרות תצוגה ייחודיות לכל סוג פורטל
-            if (currentGameType === 'letters') {
-                imgEl.style.display = 'none';
-                emojiEl.style.display = 'none';
-                textDisplay.style.display = 'none';
-                card.classList.add('image-loading');
-                
-                document.getElementById('instruction-title').innerText = "מתחיל באות:";
-                document.getElementById('target-text').innerText = targetLetter;
-
-                imgEl.onload = function() {
-                    if (imageLoadTimeout) clearTimeout(imageLoadTimeout);
-                    card.classList.remove('image-loading');
-                    imgEl.style.display = 'block'; 
-                    emojiEl.style.display = 'none';
-                };
-
-                imgEl.onerror = function() {
-                    showEmojiFallback();
-                };
-
-                imageLoadTimeout = setTimeout(() => {
-                    if (imgEl.style.display === 'none') showEmojiFallback();
-                }, 1200);
-
-                imgEl.src = currentItem.img;
-
-            } else if (currentGameType === 'math') {
-                card.classList.remove('image-loading');
-                imgEl.style.display = 'none';
-                emojiEl.style.display = 'none';
-                textDisplay.style.display = 'flex';
-                
-                document.getElementById('math-visual-emojis').innerText = currentItem.emojis;
-                document.getElementById('math-text-equation').innerText = currentItem.text;
-
-                document.getElementById('instruction-title').innerText = "חשבון לקטנטנים:";
-                document.getElementById('target-text').innerText = "נכון?";
-            }
-            
-            card.classList.remove('bounce-in');
-            void card.offsetWidth; 
-            card.classList.add('bounce-in');
-        }
-
-        function showEmojiFallback() {
-            if (imageLoadTimeout) clearTimeout(imageLoadTimeout);
-            const imgEl = document.getElementById('current-image');
-            const emojiEl = document.getElementById('emoji-fallback');
-            const card = document.getElementById('game-card');
-            
-            card.classList.remove('image-loading');
-            imgEl.style.display = 'none';
-            emojiEl.style.display = 'block';
-            emojiEl.innerText = currentGameType === 'letters' ? currentItem.emoji : (currentItem.item ? currentItem.item.emoji : currentItem.emoji);
-        }
-
-        // ==================== מנגנון משחק הבונוס: פיצוץ בלונים ====================
-        function startBalloonGame() {
-            bonusActive = true;
-            bonusTimeLeft = 30; // 30 שניות למשחק
-            document.getElementById('timer-display').innerText = bonusTimeLeft.toFixed(1);
-            document.getElementById('progress-text').innerText = "בונוס!";
-            
-            // הסתרת אזור המשחק הישן והצגת אזור הבלונים
-            document.getElementById('main-game-play-area').style.display = 'none';
-            document.getElementById('game-play-buttons').style.display = 'none';
-            
-            const balloonArea = document.getElementById('balloon-game-container');
-            balloonArea.style.display = 'block';
-            balloonArea.innerHTML = ''; // ניקוי בלונים ישנים
-
-            // טיימר ייחודי למשחק הבונוס
-            timerInterval = setInterval(() => {
-                bonusTimeLeft -= 0.1;
-                if (bonusTimeLeft <= 0) {
-                    bonusTimeLeft = 0;
-                    stopBalloonGame();
-                    handleLevelComplete();
-                }
-                document.getElementById('timer-display').innerText = bonusTimeLeft.toFixed(1);
-            }, 100);
-
-            // ייצור בלונים בקצב מהיר
-            balloonInterval = setInterval(() => {
-                createBalloon();
-            }, 450); // יצירת בלון חדש כל חצי שניה
-        }
-
-        function createBalloon() {
-            if (!bonusActive) return;
-
-            const balloonArea = document.getElementById('balloon-game-container');
-            const balloon = document.createElement('div');
-            
-            // בחירת סוג בלון (80% רגיל, 10% פצצה, 10% כוכב)
-            const typeRand = Math.random();
-            let type = 'normal';
-            let emoji = '';
-            let color = '';
-
-            const colors = [
-                'from-red-400 to-red-600 border-red-500 text-red-100',
-                'from-sky-400 to-sky-600 border-sky-500 text-sky-100',
-                'from-emerald-400 to-emerald-600 border-emerald-500 text-emerald-100',
-                'from-amber-400 to-amber-600 border-amber-500 text-amber-100',
-                'from-fuchsia-400 to-fuchsia-600 border-fuchsia-500 text-fuchsia-100',
-                'from-violet-400 to-violet-600 border-violet-500 text-violet-100'
-            ];
-
-            if (typeRand < 0.15) {
-                type = 'bomb';
-                emoji = '💣';
-                color = 'from-stone-700 to-stone-900 border-stone-800';
-            } else if (typeRand < 0.3) {
-                type = 'star';
-                emoji = '🌟';
-                color = 'from-yellow-300 to-yellow-500 border-yellow-400 text-yellow-900';
             } else {
-                type = 'normal';
-                emoji = '🎈';
-                color = colors[Math.floor(Math.random() * colors.length)];
+                slot.classList.remove('sticker-unlocked');
+                slot.classList.add('sticker-locked');
             }
+        }
+    }
 
-            balloon.className = `balloon bg-gradient-to-br ${color} border-2`;
-            balloon.style.left = (Math.random() * 70 + 15) + '%'; // מיקום אופקי אקראי רחב
+    // בדיקה והפעלת חגיגת הניצחון הגדולה (10 מדבקות)
+    function checkGrandVictory() {
+        if (stickers >= 10) {
+            playSuccessSound();
+            document.getElementById('grand-victory-screen').style.display = 'flex';
+        }
+    }
 
-            // הגדרת מהירות ציפה אקראית כדי שיהיה מאתגר
-            const speed = Math.random() * 2 + 2.5; // 2.5 עד 4.5 שניות
-            balloon.style.animationDuration = speed + 's';
+    // איפוס המשחק להתחלה מחדש
+    function resetGame() {
+        stickers = 0;
+        document.getElementById('sticker-count').innerText = stickers;
+        updateStickerAlbum();
+        
+        // איפוס התחנות שהושלמו
+        for (let key in completedStations) {
+            completedStations[key] = false;
+        }
 
-            // יצירת אלמנט האמוג'י הפנימי של הבלון
-            const innerEmoji = document.createElement('span');
-            innerEmoji.className = 'select-none pointer-events-none transform -translate-y-1 block';
-            innerEmoji.innerText = emoji;
-            balloon.appendChild(innerEmoji);
+        // איפוס כל החפיסות בקבלת התחלה מחדש
+        for (let key in decks) {
+            decks[key] = [];
+        }
 
-            // אירוע פיצוץ בלון – מותאם לעכבר ולמגע
-            const popEvent = (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                popBalloon(balloon, type);
-            };
+        document.getElementById('grand-victory-screen').style.display = 'none';
+        goHome();
+    }
+
+    // הפעלת מסך חגיגה מלכותי למשך 5 שניות
+    function triggerCelebration() {
+        playSuccessSound();
+        const successScreen = document.getElementById('success-screen');
+        successScreen.style.display = 'flex';
+        
+        // סימון התחנה הנוכחית כהושלמה
+        if (currentMode) {
+            completedStations[currentMode] = true;
+        }
+
+        stickers++;
+        document.getElementById('sticker-count').innerText = stickers;
+        updateStickerAlbum();
+
+        // הגדרת טיימר גיבוי אוטומטי של 5 שניות למקרה שלא לחצו על שום דבר
+        clearTimeout(celebrationTimeout);
+        celebrationTimeout = setTimeout(() => {
+            dismissCelebration();
+        }, 5000);
+    }
+
+    // פונקציית דילוג וסגירת מסך החגיגה המלכותי
+    function dismissCelebration() {
+        const successScreen = document.getElementById('success-screen');
+        if (successScreen.style.display === 'none') return; // מונע הרצה כפולה אם כבר דולג
+        
+        clearTimeout(celebrationTimeout); // ניקוי טיימר הגיבוי
+        successScreen.style.display = 'none';
+
+        // בדיקה אם הגיעו ל-10 מדבקות. אם כן - מציגים את מסך הסיום. אם לא - ממשיכים כרגיל.
+        if (stickers >= 10) {
+            checkGrandVictory();
+        } else {
+            generateQuestion();
+        }
+    }
+
+    // הוספת האזנה למקש הרווח במקלדת כדי לדלג על החגיגה המלכותית
+    document.addEventListener('keydown', (e) => {
+        const successScreen = document.getElementById('success-screen');
+        // אם מסך החגיגה המלכותי פתוח ומקש הרווח נלחץ
+        if (successScreen.style.display === 'flex' && (e.key === ' ' || e.code === 'Space')) {
+            e.preventDefault(); // מניעת הגלילה הדיפולטיבית של מקש הרווח
+            dismissCelebration();
+        }
+    });
+
+    function checkAnswer(val) {
+        if (isAnsweringLocked) return;
+
+        const userVal = (val ? val.toString().trim() : document.getElementById('answer-input').value.trim());
+        const feedback = document.getElementById('feedback');
+        
+        if(userVal == targetAnswer.trim()) {
+            isAnsweringLocked = true;
             
-            balloon.addEventListener('mousedown', popEvent);
-            balloon.addEventListener('touchstart', popEvent);
+            document.getElementById('submit-btn').disabled = true;
+            const buttons = document.querySelectorAll('.opt-btn');
+            buttons.forEach(btn => btn.disabled = true);
 
-            balloonArea.appendChild(balloon);
-
-            // ניקוי בלונים שיצאו מהמסך
+            feedback.innerHTML = "<span style='color:green'>קסום! תשובה נכונה ✨</span>";
+            
             setTimeout(() => {
-                balloon.remove();
-            }, speed * 1000);
-        }
-
-        function popBalloon(balloonEl, type) {
-            if (!bonusActive) return;
-
-            // אפקט ויזואלי של פיצוץ
-            balloonEl.style.transform = 'scale(1.4)';
-            balloonEl.style.opacity = '0';
-            balloonEl.style.pointerEvents = 'none';
-
-            if (type === 'normal') {
-                score += 1;
-                playSound(600);
-            } else if (type === 'star') {
-                score += 3;
-                playSound(900);
-                showPointsIndicator(balloonEl, '+3', 'text-yellow-500');
-            } else if (type === 'bomb') {
-                score = Math.max(0, score - 2);
-                playSound(150, 'sawtooth');
-                showPointsIndicator(balloonEl, '-2', 'text-red-500');
-            }
-
-            document.getElementById('score').innerText = score;
-
-            // אנימציה עדינה של פופ
-            const scoreEl = document.getElementById('score');
-            scoreEl.classList.remove('score-pop');
-            void scoreEl.offsetWidth;
-            scoreEl.classList.add('score-pop');
-
+                triggerCelebration();
+            }, 500);
+        } else {
+            feedback.innerHTML = "<span style='color:red'>אופס! פותחים משימת הפסקה פעילה... 🎩</span>";
+            isAnsweringLocked = true;
             setTimeout(() => {
-                balloonEl.remove();
-            }, 100);
+                triggerRescueTask();
+            }, 1000);
         }
+    }
 
-        // ציון נקודות מעופף בפיצוץ בלון כוכב או פצצה
-        function showPointsIndicator(balloonEl, text, colorClass) {
-            const ind = document.createElement('div');
-            ind.className = `absolute ${colorClass} font-black text-3xl select-none pointer-events-none transition-all duration-700 ease-out`;
-            ind.innerText = text;
-            
-            const rect = balloonEl.getBoundingClientRect();
-            ind.style.left = rect.left + 'px';
-            ind.style.top = rect.top + 'px';
-            
-            document.body.appendChild(ind);
-            
-            setTimeout(() => {
-                ind.style.transform = 'translateY(-60px)';
-                ind.style.opacity = '0';
-            }, 50);
+    function goHome() {
+        document.getElementById('menu-screen').className = 'screen active';
+        document.getElementById('game-screen').className = 'screen';
+        document.getElementById('rescue-screen').style.display = 'none';
+        document.getElementById('success-screen').style.display = 'none';
+        clearTimeout(celebrationTimeout);
+    }
 
-            setTimeout(() => ind.remove(), 800);
-        }
+    function start(mode) {
+        initAudio();
+        currentMode = mode;
+        document.getElementById('menu-screen').className = 'screen';
+        document.getElementById('game-screen').className = 'screen active';
+        generateQuestion();
+    }
 
-        function stopBalloonGame() {
-            bonusActive = false;
-            if (balloonInterval) clearInterval(balloonInterval);
-            stopTimer();
-            
-            // ניקוי כל הבלונים מהמסך
-            const balloonArea = document.getElementById('balloon-game-container');
-            balloonArea.innerHTML = '';
-        }
+    // הצמדה מפורשת של כל הפונקציות לאובייקט הגלובלי window כדי למנוע ReferenceErrors בסביבות הרצה מוגבלות
+    window.start = start;
+    window.goHome = goHome;
+    window.openMapModal = openMapModal;
+    window.closeMapModal = closeMapModal;
+    window.travelTo = travelTo;
+    window.completeRescue = completeRescue;
+    window.dismissCelebration = dismissCelebration;
+    window.resetGame = resetGame;
+    window.checkAnswer = checkAnswer;
+    window.toggleStickerAlbum = toggleStickerAlbum;
+    window.toggleMathHelper = toggleMathHelper;
 
-        // סיום השלב בהצלחה
-        function handleLevelComplete() {
-            stopTimer();
-            stopBalloonGame();
-            isProcessing = true; 
-            
-            const elapsed = parseFloat(document.getElementById('timer-display').innerText);
-            const msg = document.getElementById('next-level-msg');
-            const bestMsg = document.getElementById('best-time-msg');
-            const finishTimeEl = document.getElementById('finish-time');
-            const finishUnitEl = document.getElementById('finish-unit');
-            
-            let isNewRecord = false;
+    document.getElementById('answer-input').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') checkAnswer();
+    });
+</script>
 
-            if (currentGameType === 'letters') {
-                finishTimeEl.innerText = elapsed.toFixed(1);
-                finishUnitEl.innerText = "שניות";
-                
-                const previousBest = globalBests.letters[targetLetter];
-                if (previousBest === undefined || elapsed < previousBest) {
-                    globalBests.letters[targetLetter] = elapsed;
-                    isNewRecord = true;
-                }
-                // התקדמות במסע שלבי האותיות
-                const lastUnlocked = parseInt(localStorage.getItem('portal_game_letters_stage')) || 0;
-                if (currentLettersStageIndex === lastUnlocked && currentLettersStageIndex < alphabetList.length - 1) {
-                    currentLettersStageIndex++;
-                    localStorage.setItem('portal_game_letters_stage', currentLettersStageIndex);
-                }
-            } else if (currentGameType === 'math') {
-                finishTimeEl.innerText = elapsed.toFixed(1);
-                finishUnitEl.innerText = "שניות";
-
-                if (globalBests.math === null || elapsed < globalBests.math) {
-                    globalBests.math = elapsed;
-                    isNewRecord = true;
-                }
-            } else if (currentGameType === 'bonus') {
-                // תוצאה של הבונוס מבוססת על מספר הבלונים שפוצצו!
-                finishTimeEl.innerText = score;
-                finishUnitEl.innerText = "בלונים!";
-
-                if (globalBests.bonus === null || score > globalBests.bonus) {
-                    globalBests.bonus = score;
-                    isNewRecord = true;
-                }
-            }
-
-            localStorage.setItem('portal_game_bests', JSON.stringify(globalBests));
-
-            if (isNewRecord) bestMsg.classList.remove('hidden');
-            else bestMsg.classList.add('hidden');
-
-            msg.classList.add('show');
-            playSound(600);
-            setTimeout(() => playSound(800), 150);
-        }
-
-        // אנימציית הוספת 10 שניות
-        function showPenaltyAnimation() {
-            const timerEl = document.getElementById('timer-display');
-            
-            timerEl.classList.remove('penalty-flash');
-            void timerEl.offsetWidth; 
-            timerEl.classList.add('penalty-flash');
-            
-            const penaltyPop = document.createElement('div');
-            penaltyPop.className = "floating-penalty text-lg font-black";
-            penaltyPop.innerText = "+10 ש'";
-            
-            const rect = timerEl.getBoundingClientRect();
-            penaltyPop.style.left = (rect.left + rect.width / 2 - 20) + 'px';
-            penaltyPop.style.top = (rect.top - 10) + 'px';
-            
-            document.body.appendChild(penaltyPop);
-            setTimeout(() => penaltyPop.remove(), 1000);
-        }
-
-        // בדיקת מענה על השאלות
-        function checkAnswer(userSaysYes) {
-            if (isProcessing) return; 
-            isProcessing = true;
-
-            let isCorrectAnswer = false;
-            
-            if (currentGameType === 'letters') {
-                const isCorrectStart = currentItem.letter === targetLetter;
-                isCorrectAnswer = (userSaysYes === isCorrectStart);
-            } else {
-                isCorrectAnswer = (userSaysYes === currentItem.isCorrect);
-            }
-
-            if (isCorrectAnswer) {
-                score++;
-                const scoreEl = document.getElementById('score');
-                scoreEl.innerText = score;
-                scoreEl.classList.remove('score-pop');
-                void scoreEl.offsetWidth;
-                scoreEl.classList.add('score-pop');
-                
-                showFeedback('v');
-                playSound(500);
-            } else {
-                startTime -= 10000; // עונש זמן: הוספת 10 שניות
-                showPenaltyAnimation();
-                
-                showFeedback('x');
-                playSound(150, 'sawtooth');
-            }
-
-            setTimeout(nextRound, 1000);
-        }
-
-        // משוב ויזואלי של סימן וי או איקס
-        function showFeedback(type) {
-            const el = document.getElementById(`feedback-${type}`);
-            el.style.display = 'flex';
-            setTimeout(() => { el.style.display = 'none'; }, 900);
-        }
-    </script>
 </body>
 </html>
